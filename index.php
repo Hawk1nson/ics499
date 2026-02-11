@@ -6,9 +6,7 @@
  * everyone else lands on the login page.
  */
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/app/config/session.php';
 
 header('Location: ' . (isset($_SESSION['user_id']) ? 'dashboard.php' : 'login.php'));
 exit;

@@ -3,6 +3,10 @@ $currentPage = $_SERVER['PHP_SELF'];
 $isAdminPage = (strpos($currentPage, 'admin.php') !== false);
 $isDashboardPage = (strpos($currentPage, 'dashboard.php') !== false && !$isAdminPage);
 $isProfilePage = (strpos($currentPage, 'profile.php') !== false);
+
+$_userRole = $_SESSION['user_role'] ?? '';
+$_isAdminRole = in_array($_userRole, ['SUPER_ADMIN', 'ADMIN'], true);
+$_isClinicalRole = in_array($_userRole, ['DOCTOR', 'NURSE'], true);
 ?>
 <aside class="main-sidebar sidebar-dark-primary elevation-3">
 	<a href="#" class="brand-link text-center">
@@ -17,9 +21,9 @@ $isProfilePage = (strpos($currentPage, 'profile.php') !== false);
 			<div class="info">
 				<span class="d-block text-white"><?= htmlspecialchars($_SESSION['user_name'] ?? 'User') ?></span>
 				<?php
-				$_roleLabels = ['SUPER_ADMIN' => 'Super Admin', 'ADMIN' => 'Admin', 'DATA_ENTRY_OPERATOR' => 'Data Entry Operator'];
+				$_roleLabels = ['SUPER_ADMIN' => 'Super Admin', 'ADMIN' => 'Admin', 'DATA_ENTRY_OPERATOR' => 'Data Entry Operator', 'DOCTOR' => 'Doctor', 'NURSE' => 'Nurse'];
 				?>
-				<small class="text-white-50"><?= htmlspecialchars($_roleLabels[$_SESSION['user_role'] ?? ''] ?? 'User') ?></small>
+				<small class="text-white-50"><?= htmlspecialchars($_roleLabels[$_userRole] ?? 'User') ?></small>
 			</div>
 		</div>
 
@@ -31,6 +35,8 @@ $isProfilePage = (strpos($currentPage, 'profile.php') !== false);
 						<p>Dashboard</p>
 					</a>
 				</li>
+
+				<?php if ($_isClinicalRole): ?>
 				<li class="nav-item">
 					<a href="#" class="nav-link">
 						<i class="nav-icon fas fa-user-injured"></i>
@@ -50,16 +56,24 @@ $isProfilePage = (strpos($currentPage, 'profile.php') !== false);
 						<p>Lab Results</p>
 					</a>
 				</li>
+				<?php endif; ?>
+
 				<li class="nav-item">
 					<a href="#" class="nav-link">
-						<i class="nav-icon fas fa-tasks"></i>
-						<p>Tasks</p>
+						<i class="nav-icon fas fa-calendar-alt"></i>
+						<p>Calendar</p>
 					</a>
 				</li>
 				<li class="nav-item">
 					<a href="#" class="nav-link">
-						<i class="nav-icon fas fa-cog"></i>
-						<p>Settings</p>
+						<i class="nav-icon fas fa-envelope"></i>
+						<p>Messages</p>
+					</a>
+				</li>
+				<li class="nav-item">
+					<a href="#" class="nav-link">
+						<i class="nav-icon fas fa-tasks"></i>
+						<p>Tasks</p>
 					</a>
 				</li>
 				<li class="nav-item">
@@ -69,11 +83,21 @@ $isProfilePage = (strpos($currentPage, 'profile.php') !== false);
 					</a>
 				</li>
 				<li class="nav-item">
+					<a href="#" class="nav-link">
+						<i class="nav-icon fas fa-cog"></i>
+						<p>Settings</p>
+					</a>
+				</li>
+
+				<?php if ($_isAdminRole): ?>
+				<li class="nav-item">
 					<a href="admin.php" class="nav-link <?= $isAdminPage ? 'active' : '' ?>">
 						<i class="nav-icon fas fa-user-shield"></i>
 						<p>Admin</p>
 					</a>
 				</li>
+				<?php endif; ?>
+
 				<li class="nav-item">
 					<a href="logout.php" class="nav-link">
 						<i class="nav-icon fas fa-sign-out-alt"></i>

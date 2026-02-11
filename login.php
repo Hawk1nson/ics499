@@ -7,9 +7,7 @@
  * visitors are redirected straight to the dashboard.
  */
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/app/config/session.php';
 
 if (isset($_SESSION['user_id'])) {
     header('Location: dashboard.php');

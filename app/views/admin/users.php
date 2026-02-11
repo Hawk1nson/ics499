@@ -42,11 +42,22 @@
 	<div class="content-wrapper">
 		<div class="content-header">
 			<div class="container-fluid">
-				<div class="row mb-2">
-					<div class="col-sm-12">
+				<div class="row mb-2 align-items-center">
+					<div class="col-sm-6">
 						<h1 class="m-0 text-dark">User Management</h1>
 						<p class="text-muted mb-0">View and manage employee accounts.</p>
 					</div>
+					<?php if ($action !== 'edit' && in_array($_SESSION['user_role'] ?? '', ['SUPER_ADMIN', 'ADMIN'], true)): ?>
+					<div class="col-sm-6 text-right mt-2 mt-sm-0">
+						<button type="button" class="btn btn-outline-info mr-1"
+								data-toggle="modal" data-target="#regCodeModal">
+							<i class="fas fa-key mr-1"></i>Registration Code
+						</button>
+						<a href="emp_register.php" class="btn btn-primary">
+							<i class="fas fa-user-plus mr-1"></i>Create User
+						</a>
+					</div>
+					<?php endif; ?>
 				</div>
 			</div>
 		</div>
@@ -216,13 +227,10 @@
 				$roleClasses = ['SUPER_ADMIN' => 'badge-danger', 'ADMIN' => 'badge-warning', 'DATA_ENTRY_OPERATOR' => 'badge-secondary'];
 				?>
 				<div class="card">
-					<div class="card-header border-0 d-flex align-items-center justify-content-between">
+					<div class="card-header border-0">
 						<h3 class="card-title mb-0">
 							<i class="fas fa-users mr-2 text-primary"></i>All Users
 						</h3>
-						<a href="emp_register.php" class="btn btn-sm btn-primary">
-							<i class="fas fa-user-plus mr-1"></i>Create User
-						</a>
 					</div>
 					<div class="card-body p-0">
 						<div class="table-responsive">
@@ -279,6 +287,59 @@
 				</div>
 				<?php endif; ?>
 
+				<?php
+				// TODO: Registration Code management card (Super Admin only).
+				// Lets a Super Admin view/change the REGISTRATION_CODE from this page
+				// instead of editing .env via FTP.
+				//
+				// To enable: make .env writable by the web server (chmod 664 .env),
+				// then uncomment this block AND the matching code in AdminController::users().
+				//
+				// if ($_SESSION['user_role'] === 'SUPER_ADMIN'):
+				?>
+				<!--
+				<div class="card mt-4">
+					<div class="card-header border-0">
+						<h3 class="card-title mb-0">
+							<i class="fas fa-key mr-2 text-primary"></i>Registration Code
+						</h3>
+					</div>
+
+					<?php if (isset($regCodeError) && $regCodeError !== null): ?>
+					<div class="card-body pb-0">
+						<div class="alert alert-danger" role="alert">
+							<?= htmlspecialchars($regCodeError) ?>
+						</div>
+					</div>
+					<?php endif; ?>
+
+					<div class="card-body">
+						<p class="text-muted small mb-3">
+							<i class="fas fa-info-circle mr-1"></i>
+							This code is required when creating a new account. Share it only with authorized staff.
+						</p>
+						<form method="POST" action="users.php" class="form-inline" novalidate>
+							<input type="hidden" name="csrf_token"
+								   value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>" />
+							<input type="hidden" name="form_action" value="update_registration_code" />
+							<div class="input-group mr-3" style="max-width: 350px;">
+								<div class="input-group-prepend">
+									<span class="input-group-text"><i class="fas fa-key"></i></span>
+								</div>
+								<input type="text" name="registration_code" id="registration_code"
+									   class="form-control"
+									   value="<?= htmlspecialchars($registrationCode) ?>"
+									   required />
+							</div>
+							<button type="submit" class="btn btn-primary">
+								<i class="fas fa-save mr-1"></i>Update Code
+							</button>
+						</form>
+					</div>
+				</div>
+				<?php // endif; ?>
+				-->
+
 			</div>
 		</section>
 	</div>
@@ -289,9 +350,54 @@
 	</footer>
 </div>
 
+<?php if (in_array($_SESSION['user_role'] ?? '', ['SUPER_ADMIN', 'ADMIN'], true)): ?>
+<div class="modal fade" id="regCodeModal" tabindex="-1" role="dialog" aria-labelledby="regCodeModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered modal-sm" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="regCodeModalLabel">
+					<i class="fas fa-key mr-2"></i>Registration Code
+				</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body text-center">
+				<div class="input-group">
+					<input type="text" class="form-control text-center font-weight-bold"
+						   id="regCodeDisplay"
+						   value="<?= htmlspecialchars($registrationCode) ?>"
+						   readonly />
+					<div class="input-group-append">
+						<button class="btn btn-outline-secondary" type="button"
+								id="copyRegCodeBtn" title="Copy to clipboard">
+							<i class="fas fa-copy"></i>
+						</button>
+					</div>
+				</div>
+				<small class="text-muted mt-2 d-block">Share only with authorized staff.</small>
+			</div>
+			<div class="modal-footer justify-content-center">
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
+</div>
+<?php endif; ?>
+
 <script src="assets/js/jquery.min.js"></script>
 <script src="assets/js/bootstrap.bundle.min.js"></script>
 <script src="assets/js/adminlte.min.js"></script>
 <script src="assets/js/theme-toggle.js"></script>
+<script>
+document.getElementById('copyRegCodeBtn') && document.getElementById('copyRegCodeBtn').addEventListener('click', function() {
+	var input = document.getElementById('regCodeDisplay');
+	input.select();
+	document.execCommand('copy');
+	var icon = this.querySelector('i');
+	icon.className = 'fas fa-check text-success';
+	setTimeout(function() { icon.className = 'fas fa-copy'; }, 1500);
+});
+</script>
 </body>
 </html>

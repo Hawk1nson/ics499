@@ -29,11 +29,7 @@
 					<label class="custom-control-label" for="themeToggleAdminDashboard">Dark mode</label>
 				</div>
 			</li>
-			<li class="nav-item">
-				<a class="btn btn-sm btn-primary" href="#" role="button">
-					<i class="fas fa-user-circle mr-1"></i>Admin Panel
-				</a>
-			</li>
+
 		</ul>
 	</nav>
 
@@ -57,17 +53,9 @@
 					<div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-4">
 						<a href="users.php" class="admin-tile">
 							<div class="admin-tile-icon">
-								<i class="fas fa-id-badge"></i>
-							</div>
-							<div class="admin-tile-label">Employee Management</div>
-						</a>
-					</div>
-					<div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-4">
-						<a href="users.php" class="admin-tile">
-							<div class="admin-tile-icon">
 								<i class="fas fa-users"></i>
 							</div>
-							<div class="admin-tile-label">User Management</div>
+							<div class="admin-tile-label">Users</div>
 						</a>
 					</div>
 					<div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-4">
@@ -75,7 +63,7 @@
 							<div class="admin-tile-icon">
 								<i class="fas fa-boxes"></i>
 							</div>
-							<div class="admin-tile-label">Asset Management</div>
+							<div class="admin-tile-label">Assets</div>
 						</a>
 					</div>
 					<div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-4">
@@ -84,6 +72,14 @@
 								<i class="fas fa-user-injured"></i>
 							</div>
 							<div class="admin-tile-label">Patient Management</div>
+						</a>
+					</div>
+					<div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-4">
+						<a href="#" class="admin-tile">
+							<div class="admin-tile-icon">
+								<i class="fas fa-envelope"></i>
+							</div>
+							<div class="admin-tile-label">Messages</div>
 						</a>
 					</div>
 					<div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-4">
@@ -103,27 +99,19 @@
 						</a>
 					</div>
 					<div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-4">
-						<a href="#" class="admin-tile">
-							<div class="admin-tile-icon">
-								<i class="fas fa-cog"></i>
-							</div>
-							<div class="admin-tile-label">Settings</div>
-						</a>
-					</div>
-					<div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-4">
-						<a href="#" class="admin-tile">
-							<div class="admin-tile-icon">
-								<i class="fas fa-envelope"></i>
-							</div>
-							<div class="admin-tile-label">Messages</div>
-						</a>
-					</div>
-					<div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-4">
 						<a href="profile.php" class="admin-tile">
 							<div class="admin-tile-icon">
 								<i class="fas fa-user-circle"></i>
 							</div>
 							<div class="admin-tile-label">Profile</div>
+						</a>
+					</div>
+					<div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-4">
+						<a href="#" class="admin-tile">
+							<div class="admin-tile-icon">
+								<i class="fas fa-cog"></i>
+							</div>
+							<div class="admin-tile-label">Settings</div>
 						</a>
 					</div>
 					<div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-4">

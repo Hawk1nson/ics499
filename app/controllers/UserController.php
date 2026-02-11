@@ -148,6 +148,16 @@ class UserController
             return 'Invalid request.';
         }
 
+        // ── Registration code guard (loads .env via getDBConnection) ─
+        $pdo = getDBConnection();
+        $requiredCode = getenv('REGISTRATION_CODE');
+        if ($requiredCode !== false && $requiredCode !== '') {
+            $submittedCode = trim($_POST['registration_code'] ?? '');
+            if (!hash_equals($requiredCode, $submittedCode)) {
+                return 'Invalid registration code.';
+            }
+        }
+
         $firstName  = trim($_POST['first_name']       ?? '');
         $lastName   = trim($_POST['last_name']        ?? '');
         $email      = trim($_POST['email']            ?? '');
@@ -177,7 +187,6 @@ class UserController
         }
 
         // ── Uniqueness checks ───────────────────────────────────
-        $pdo = getDBConnection();
 
         $stmt = $pdo->prepare('SELECT 1 FROM users WHERE email = ? LIMIT 1');
         $stmt->execute([$email]);

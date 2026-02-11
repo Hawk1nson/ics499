@@ -7,9 +7,7 @@
  * Unauthenticated requests are redirected to login.php.
  */
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/../config/session.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');

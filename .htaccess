@@ -1,37 +1,22 @@
+# ─── Force HTTPS ─────────────────────────────────────────────────────
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTPS} off
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
 # ─── Directory listing ───────────────────────────────────────────────
 Options -Indexes
 
-# ─── Block access to sensitive files & directories ──────────────────
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-
-    # Deny .git directory entirely
-    RewriteRule ^\.git(/|$)     -  [F,L]
-
-    # Deny .env files (actual env, backups, etc.)
-    RewriteRule ^\.env          -  [F,L]
-
-    # Deny htpasswd files
-    RewriteRule ^\.htpasswd     -  [F,L]
-</IfModule>
-
-# Fallback for servers without mod_rewrite
-<Files ".env">
-    Order Deny,Allow
-    Deny from all
-</Files>
-<Files ".env.*">
-    Order Deny,Allow
-    Deny from all
-</Files>
-# Re-allow the example template (it has no secrets)
-<Files ".env.example">
-    Order Allow,Deny
-    Allow from all
-</Files>
-<Files ".htpasswd">
-    Order Deny,Allow
-    Deny from all
+# ─── Block access to dot-files (.user.ini, etc.) ────────────────────
+<Files ".*">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order Deny,Allow
+        Deny from all
+    </IfModule>
 </Files>
 
 # ─── Security headers ───────────────────────────────────────────────
@@ -45,7 +30,7 @@ Options -Indexes
     # Stop browsers caching sensitive responses
     Header set Cache-Control "no-store, no-cache, must-revalidate, private"
 
-    # Disable FLOSoftware version leakage
+    # Disable version leakage
     Header unset Server
     Header unset X-Powered-By
 
@@ -56,18 +41,13 @@ Options -Indexes
     Header set X-XSS-Protection "1; mode=block"
 </IfModule>
 
-# ─── PHP hardening (shared-host safe) ───────────────────────────────
+# ─── PHP hardening (mod_php only – .user.ini handles PHP-FPM) ────────
 <IfModule mod_php.c>
-    # Expose no PHP version info in headers
     php_flag  expose_php            Off
-
-    # Disable file uploads if not needed yet
     php_flag  file_uploads          Off
-
-    # Limit upload size defensively
     php_value upload_max_filesize   2M
-
-    # Prevent remote file inclusion
     php_flag  allow_url_include     Off
     php_flag  allow_url_fopen       Off
+    php_flag  display_errors        Off
+    php_flag  log_errors            On
 </IfModule>

@@ -163,6 +163,20 @@
 										</div>
 									</div>
 
+									<!-- Registration Code -->
+									<div class="form-group">
+										<label for="registration_code" class="small font-weight-bold text-muted">Registration Code</label>
+										<div class="input-group">
+											<div class="input-group-prepend">
+												<span class="input-group-text"><i class="fas fa-key"></i></span>
+											</div>
+											<input type="text" name="registration_code" id="registration_code"
+												   class="form-control"
+												   placeholder="Enter the code provided by your administrator"
+												   autocomplete="off" required />
+										</div>
+									</div>
+
 									<!-- Role notice -->
 									<p class="text-muted small mb-3">
 										<i class="fas fa-info-circle mr-1"></i>

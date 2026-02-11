@@ -1,4 +1,4 @@
-# Block all direct web access to the app directory
+# Block all direct web access to the database directory
 <IfModule mod_authz_core.c>
     Require all denied
 </IfModule>

@@ -1,3 +1,0 @@
-# Documentation – internal only, never web-accessible.
-Order Deny,Allow
-Deny from all

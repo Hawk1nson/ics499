@@ -29,11 +29,19 @@
 					<label class="custom-control-label" for="themeToggleProfile">Dark mode</label>
 				</div>
 			</li>
+			<?php if (in_array($_SESSION['user_role'] ?? '', ['SUPER_ADMIN', 'ADMIN'], true)): ?>
+			<li class="nav-item">
+				<a class="btn btn-sm btn-outline-secondary" href="admin.php" role="button">
+					<i class="fas fa-arrow-left mr-1"></i>Admin Dashboard
+				</a>
+			</li>
+			<?php else: ?>
 			<li class="nav-item">
 				<a class="btn btn-sm btn-outline-secondary" href="dashboard.php" role="button">
 					<i class="fas fa-arrow-left mr-1"></i>Back to Dashboard
 				</a>
 			</li>
+			<?php endif; ?>
 		</ul>
 	</nav>
 
