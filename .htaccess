@@ -44,7 +44,7 @@ Options -Indexes
 # ─── PHP hardening (mod_php only – .user.ini handles PHP-FPM) ────────
 <IfModule mod_php.c>
     php_flag  expose_php            Off
-    php_flag  file_uploads          Off
+    php_flag  file_uploads          On
     php_value upload_max_filesize   2M
     php_flag  allow_url_include     Off
     php_flag  allow_url_fopen       Off
