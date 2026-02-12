@@ -1,5 +1,6 @@
 <?php
 /**
+ * demonstrating GitHub.
  * index.php – application entry-point.
  *
  * Redirects authenticated users to the dashboard;
