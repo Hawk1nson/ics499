@@ -1,4 +1,34 @@
-<?php require __DIR__ . '/app/middleware/auth.php'; ?>
+<?php
+require __DIR__ . '/app/middleware/auth.php';
+require_once __DIR__ . '/app/config/database.php';
+
+$pdo = getDBConnection();
+$calendarEvents = $pdo->query(
+    'SELECT event_id, title, description, event_type, start_datetime, end_datetime, status, location_name
+       FROM events WHERE is_active = 1 ORDER BY start_datetime'
+)->fetchAll();
+
+$_userRole = $_SESSION['user_role'] ?? '';
+$_isClinicalRole = in_array($_userRole, ['DOCTOR', 'TRIAGE_NURSE', 'NURSE'], true);
+
+// Doctor queue: case sheets with completed intake awaiting review
+$doctorQueue = [];
+if ($_userRole === 'DOCTOR') {
+	$stmt = $pdo->prepare(
+		'SELECT cs.case_sheet_id, cs.patient_id, cs.visit_type, cs.chief_complaint,
+		        cs.visit_datetime, p.first_name, p.last_name, p.patient_code,
+		        p.sex, p.age_years,
+		        u.first_name AS nurse_first, u.last_name AS nurse_last
+		   FROM case_sheets cs
+		   JOIN patients p ON p.patient_id = cs.patient_id
+		   LEFT JOIN users u ON u.user_id = cs.created_by_user_id
+		  WHERE cs.status = ?
+		  ORDER BY cs.visit_datetime ASC'
+	);
+	$stmt->execute(['INTAKE_COMPLETE']);
+	$doctorQueue = $stmt->fetchAll();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,8 +39,10 @@
 	<link rel="stylesheet" href="assets/icons/css/all.min.css" />
 	<link rel="stylesheet" href="assets/css/adminlte.min.css" />
 	<link rel="stylesheet" href="assets/css/theme.css" />
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.css" />
 </head>
-<body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed">
+<body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed<?= ($_SESSION['font_size'] ?? 'normal') === 'large' ? ' font-size-large' : '' ?>"
+      data-theme-server="<?= htmlspecialchars($_SESSION['theme'] ?? 'system') ?>">
 <div class="wrapper">
 	<nav class="main-header navbar navbar-expand navbar-white navbar-light">
 		<ul class="navbar-nav">
@@ -33,11 +65,13 @@
 			<li class="nav-item d-none d-md-inline-block mr-3 text-muted small">
 				<i class="fas fa-sun pr-1"></i>Optimized for outdoor tablet use
 			</li>
+			<?php if ($_isClinicalRole): ?>
 			<li class="nav-item">
-				<a class="btn btn-sm btn-primary" href="#" role="button">
-					<i class="fas fa-plus-circle mr-1"></i>New record
+				<a class="btn btn-sm btn-primary" href="intake.php" role="button">
+					<i class="fas fa-clipboard-list mr-1"></i>Start Intake
 				</a>
 			</li>
+			<?php endif; ?>
 		</ul>
 	</nav>
 
@@ -61,6 +95,63 @@
 
 		<section class="content">
 			<div class="container-fluid">
+
+				<?php if ($_userRole === 'DOCTOR' && !empty($doctorQueue)): ?>
+				<div class="card card-outline card-warning mb-4">
+					<div class="card-header d-flex align-items-center">
+						<h3 class="card-title mb-0">
+							<i class="fas fa-user-clock mr-2"></i>Patients Ready
+							<span class="badge badge-warning ml-2"><?= count($doctorQueue) ?></span>
+						</h3>
+					</div>
+					<div class="card-body p-0">
+						<div class="table-responsive">
+							<table class="table table-hover table-striped mb-0">
+								<thead>
+									<tr>
+										<th>Patient</th>
+										<th>Visit Type</th>
+										<th>Chief Complaint</th>
+										<th>Intake Time</th>
+										<th>Intake By</th>
+										<th></th>
+									</tr>
+								</thead>
+								<tbody>
+									<?php foreach ($doctorQueue as $q): ?>
+									<tr>
+										<td>
+											<strong><?= htmlspecialchars($q['first_name'] . ' ' . ($q['last_name'] ?? '')) ?></strong>
+											<br><small class="text-muted"><?= htmlspecialchars($q['patient_code']) ?>
+											<?= $q['sex'] && $q['sex'] !== 'UNKNOWN' ? ' &middot; ' . htmlspecialchars($q['sex']) : '' ?>
+											<?= $q['age_years'] ? ' &middot; ' . (int)$q['age_years'] . 'y' : '' ?></small>
+										</td>
+										<td><span class="badge badge-info"><?= htmlspecialchars($q['visit_type']) ?></span></td>
+										<td><?= htmlspecialchars($q['chief_complaint'] ?? '') ?></td>
+										<td><small><?= date('g:i A', strtotime($q['visit_datetime'])) ?></small></td>
+										<td><small><?= htmlspecialchars(($q['nurse_first'] ?? '') . ' ' . ($q['nurse_last'] ?? '')) ?></small></td>
+										<td>
+											<form method="post" action="intake.php?action=claim" style="display:inline">
+												<input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>" />
+												<input type="hidden" name="case_sheet_id" value="<?= (int)$q['case_sheet_id'] ?>" />
+												<button type="submit" class="btn btn-sm btn-primary">
+													<i class="fas fa-stethoscope mr-1"></i>Review
+												</button>
+											</form>
+										</td>
+									</tr>
+									<?php endforeach; ?>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+				<?php elseif ($_userRole === 'DOCTOR'): ?>
+				<div class="alert alert-light border mb-4">
+					<i class="fas fa-check-circle text-success mr-2"></i>No patients waiting for review.
+				</div>
+				<?php endif; ?>
+
 				<div class="row">
 					<div class="col-lg-7">
 						<div class="card card-outline card-primary hero-card">
@@ -144,39 +235,11 @@
 
 						<div class="card shadow-sm">
 							<div class="card-header border-0 d-flex justify-content-between align-items-center">
-								<h3 class="card-title mb-0"><i class="fas fa-notes-medical mr-2 text-primary"></i>Upcoming</h3>
-								<span class="badge badge-secondary">Today</span>
+								<h3 class="card-title mb-0"><i class="fas fa-calendar-alt mr-2 text-primary"></i>Upcoming</h3>
+								<a href="calendar.php" class="btn btn-sm btn-outline-primary">View full calendar</a>
 							</div>
-							<div class="card-body">
-								<div class="timeline">
-									<div class="time-label"><span class="bg-primary">08:00</span></div>
-									<div>
-										<i class="fas fa-user-md bg-primary"></i>
-										<div class="timeline-item">
-											<span class="time"><i class="far fa-clock"></i> 30m</span>
-											<h3 class="timeline-header">Morning rounds</h3>
-											<div class="timeline-body">Team A | Cardiology</div>
-										</div>
-									</div>
-									<div class="time-label"><span class="bg-secondary">11:00</span></div>
-									<div>
-										<i class="fas fa-vial bg-secondary"></i>
-										<div class="timeline-item">
-											<span class="time"><i class="far fa-clock"></i> 45m</span>
-											<h3 class="timeline-header">Lab review</h3>
-											<div class="timeline-body">CBC and metabolic panels</div>
-										</div>
-									</div>
-									<div class="time-label"><span class="bg-info">14:00</span></div>
-									<div>
-										<i class="fas fa-clipboard-check bg-info"></i>
-										<div class="timeline-item">
-											<span class="time"><i class="far fa-clock"></i> 20m</span>
-											<h3 class="timeline-header">Discharge planning</h3>
-											<div class="timeline-body">Confirm follow-ups and scripts</div>
-										</div>
-									</div>
-								</div>
+							<div class="card-body p-2">
+								<div id="clinicalCalendarWidget"></div>
 							</div>
 						</div>
 					</div>
@@ -194,5 +257,44 @@
 <script src="assets/js/bootstrap.bundle.min.js"></script>
 <script src="assets/js/adminlte.min.js"></script>
 <script src="assets/js/theme-toggle.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+	var typeColors = {
+		'MEDICAL_CAMP': '#007bff',
+		'EDUCATIONAL_SEMINAR': '#28a745',
+		'TRAINING': '#17a2b8',
+		'MEETING': '#ffc107',
+		'OTHER': '#6c757d'
+	};
+
+	var events = <?= json_encode(array_map(function ($e) {
+		return [
+			'title' => $e['title'],
+			'start' => $e['start_datetime'],
+			'end'   => $e['end_datetime'],
+			'color' => '',
+			'type'  => $e['event_type'],
+		];
+	}, $calendarEvents), JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+
+	events.forEach(function (e) {
+		e.color = typeColors[e.type] || '#6c757d';
+	});
+
+	var cal = new FullCalendar.Calendar(document.getElementById('clinicalCalendarWidget'), {
+		initialView: 'listWeek',
+		headerToolbar: {
+			left: 'prev,next',
+			center: 'title',
+			right: ''
+		},
+		events: events,
+		height: 300,
+		noEventsText: 'No upcoming events'
+	});
+	cal.render();
+});
+</script>
 </body>
 </html>
