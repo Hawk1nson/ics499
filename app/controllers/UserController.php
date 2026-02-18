@@ -114,6 +114,17 @@ class UserController
         $pdo->prepare('UPDATE users SET last_login_at = NOW() WHERE user_id = ?')
             ->execute([$row['user_id']]);
 
+        // ── Load user preferences into session ───────────────
+        $prefStmt = $pdo->prepare(
+            'SELECT theme, language, font_size FROM user_preferences
+             WHERE account_type = ? AND account_id = ? LIMIT 1'
+        );
+        $prefStmt->execute(['STAFF', $row['user_id']]);
+        $userPrefs = $prefStmt->fetch();
+        $_SESSION['theme']     = $userPrefs['theme']     ?? 'system';
+        $_SESSION['language']  = $userPrefs['language']  ?? 'en';
+        $_SESSION['font_size'] = $userPrefs['font_size'] ?? 'normal';
+
         $destination = in_array($row['role'], ['ADMIN', 'SUPER_ADMIN']) ? 'admin.php' : 'dashboard.php';
         header('Location: ' . $destination);
         exit;
@@ -292,6 +303,148 @@ class UserController
 
         $_SESSION['profile_success'] = 'Profile updated successfully.';
         header('Location: profile.php');
+        exit;
+    }
+
+    // ── Settings ─────────────────────────────────────────────
+
+    /**
+     * GET  – render the settings page.
+     * POST – validate and persist settings (PRG on success).
+     *        Also handles AJAX theme-toggle POSTs from theme-toggle.js.
+     */
+    public function settings(): void
+    {
+        $pdo = getDBConnection();
+
+        // ── AJAX theme toggle (fire-and-forget from JS) ──────
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_GET['ajax'] ?? '') === 'theme') {
+            header('Content-Type: application/json');
+            if (!hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'] ?? '')) {
+                echo json_encode(['error' => 'Invalid token']);
+                exit;
+            }
+            $theme = $_POST['theme'] ?? 'system';
+            if (!in_array($theme, ['light', 'dark', 'system'], true)) {
+                echo json_encode(['error' => 'Invalid theme']);
+                exit;
+            }
+            $pdo->prepare(
+                'INSERT INTO user_preferences (account_type, account_id, theme)
+                 VALUES (?, ?, ?)
+                 ON DUPLICATE KEY UPDATE theme = VALUES(theme)'
+            )->execute(['STAFF', $_SESSION['user_id'], $theme]);
+            $_SESSION['theme'] = $theme;
+            echo json_encode(['ok' => true]);
+            exit;
+        }
+
+        // ── One-time flash ──────────────────────────────────────
+        $flashSuccess = null;
+        if (isset($_SESSION['settings_success'])) {
+            $flashSuccess = $_SESSION['settings_success'];
+            unset($_SESSION['settings_success']);
+        }
+
+        $formError = null;
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $formError = $this->processSettingsUpdate();
+        }
+
+        // ── Load current preferences (or defaults) ─────────────
+        $stmt = $pdo->prepare(
+            'SELECT * FROM user_preferences
+             WHERE account_type = ? AND account_id = ? LIMIT 1'
+        );
+        $stmt->execute(['STAFF', $_SESSION['user_id']]);
+        $prefs = $stmt->fetch();
+
+        if (!$prefs) {
+            $prefs = [
+                'theme'                   => 'system',
+                'language'                => 'en',
+                'font_size'               => 'normal',
+                'date_format'             => 'DD/MM/YYYY',
+                'session_timeout_minutes' => 30,
+                'email_notifications'     => 1,
+            ];
+        }
+
+        require __DIR__ . '/../views/settings.php';
+    }
+
+    /**
+     * Validate and persist settings changes.
+     * Returns an error string on failure, or exits via redirect on success.
+     */
+    private function processSettingsUpdate(): ?string
+    {
+        // ── CSRF guard ──────────────────────────────────────────
+        if (!hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'] ?? '')) {
+            return 'Invalid request.';
+        }
+
+        $userId = (int)($_SESSION['user_id'] ?? 0);
+        if ($userId === 0) {
+            return 'Invalid user.';
+        }
+
+        // ── Validate inputs ─────────────────────────────────────
+        $theme = $_POST['theme'] ?? 'system';
+        if (!in_array($theme, ['light', 'dark', 'system'], true)) {
+            return 'Invalid theme selection.';
+        }
+
+        $language = $_POST['language'] ?? 'en';
+        if (!in_array($language, ['en', 'te'], true)) {
+            return 'Invalid language selection.';
+        }
+
+        $fontSize = $_POST['font_size'] ?? 'normal';
+        if (!in_array($fontSize, ['normal', 'large'], true)) {
+            return 'Invalid font size selection.';
+        }
+
+        $dateFormat = $_POST['date_format'] ?? 'DD/MM/YYYY';
+        if (!in_array($dateFormat, ['DD/MM/YYYY', 'MM/DD/YYYY'], true)) {
+            return 'Invalid date format selection.';
+        }
+
+        $sessionTimeout = (int)($_POST['session_timeout_minutes'] ?? 30);
+        if (!in_array($sessionTimeout, [15, 30, 60], true)) {
+            return 'Invalid session timeout selection.';
+        }
+
+        $emailNotifications = isset($_POST['email_notifications']) ? 1 : 0;
+
+        // ── Upsert preferences ──────────────────────────────────
+        $pdo = getDBConnection();
+        $stmt = $pdo->prepare(
+            'INSERT INTO user_preferences
+                (account_type, account_id, theme, language, font_size,
+                 date_format, session_timeout_minutes, email_notifications)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE
+                theme = VALUES(theme),
+                language = VALUES(language),
+                font_size = VALUES(font_size),
+                date_format = VALUES(date_format),
+                session_timeout_minutes = VALUES(session_timeout_minutes),
+                email_notifications = VALUES(email_notifications)'
+        );
+        $stmt->execute([
+            'STAFF', $userId, $theme, $language, $fontSize,
+            $dateFormat, $sessionTimeout, $emailNotifications
+        ]);
+
+        // ── Update session so changes apply immediately ─────────
+        $_SESSION['theme']     = $theme;
+        $_SESSION['language']  = $language;
+        $_SESSION['font_size'] = $fontSize;
+
+        $_SESSION['settings_success'] = 'Settings saved successfully.';
+        header('Location: settings.php');
         exit;
     }
 }

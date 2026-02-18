@@ -295,3 +295,21 @@ body.login-page {
 .btn-login:hover {
 	opacity: 0.9;
 }
+
+/* ── Font-size preference ─────────────────────────────── */
+body.font-size-large {
+	font-size: 1.1rem;
+}
+
+body.font-size-large .small,
+body.font-size-large small {
+	font-size: 0.9rem;
+}
+
+body.font-size-large .table {
+	font-size: 1.05rem;
+}
+
+body.font-size-large .card-title {
+	font-size: 1.2rem;
+}

@@ -3,6 +3,14 @@
 	const className = 'dark-mode';
 
 	const getPreferredTheme = () => {
+		// Server-stored preference takes priority (set via data-theme-server on <body>)
+		const serverPref = document.body.dataset.themeServer;
+		if (serverPref === 'light' || serverPref === 'dark') {
+			localStorage.setItem(storageKey, serverPref);
+			return serverPref;
+		}
+
+		// Fall back to localStorage, then OS preference
 		const stored = localStorage.getItem(storageKey);
 		if (stored === 'light' || stored === 'dark') {
 			return stored;
@@ -35,6 +43,16 @@
 		});
 	};
 
+	const persistThemeToServer = (theme) => {
+		const csrfInput = document.querySelector('input[name="csrf_token"]');
+		if (!csrfInput) return;
+		fetch('settings.php?ajax=theme', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+			body: 'csrf_token=' + encodeURIComponent(csrfInput.value) + '&theme=' + encodeURIComponent(theme),
+		}).catch(() => {});
+	};
+
 	const init = () => {
 		applyTheme(getPreferredTheme());
 
@@ -44,6 +62,7 @@
 				const next = isDark ? 'dark' : 'light';
 				localStorage.setItem(storageKey, next);
 				applyTheme(next);
+				persistThemeToServer(next);
 			});
 		});
 	};
