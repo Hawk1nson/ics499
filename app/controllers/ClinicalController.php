@@ -14,10 +14,13 @@
  */
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/permissions.php';
 
 class ClinicalController
 {
-	private const CLINICAL_ROLES = ['DOCTOR', 'TRIAGE_NURSE', 'NURSE'];
+	// Roles with write (RW) access to case_sheets per the access matrix.
+	// Used only as a reference; guards now call can() directly.
+	private const CLINICAL_ROLES = ['SUPER_ADMIN', 'ADMIN', 'DOCTOR', 'TRIAGE_NURSE', 'NURSE', 'PARAMEDIC', 'DATA_ENTRY_OPERATOR'];
 
 	// ── Intake form ─────────────────────────────────────────
 
@@ -496,8 +499,7 @@ class ClinicalController
 
 	private function requireClinicalRole(): void
 	{
-		$role = $_SESSION['user_role'] ?? '';
-		if (!in_array($role, self::CLINICAL_ROLES, true)) {
+		if (!can($_SESSION['user_role'] ?? '', 'case_sheets', 'W')) {
 			$_SESSION['dashboard_notice'] = 'You do not have permission to access this page.';
 			header('Location: dashboard.php');
 			exit;

@@ -9,16 +9,20 @@ error_reporting(E_ALL);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
-session_start();
+require_once __DIR__ . '/app/config/session.php';
+require_once __DIR__ . '/app/config/permissions.php';
 header('Content-Type: application/json');
 
-// TODO: Add authentication check here
-// if (!isset($_SESSION['employee_id'])) {
-//     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-//     exit;
-// }
+if (!isset($_SESSION['user_id'])) {
+	echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+	exit;
+}
 
-// Database connection
+if (!can($_SESSION['user_role'] ?? '', 'patient_data', 'W')) {
+	echo json_encode(['success' => false, 'message' => 'Forbidden']);
+	exit;
+}
+
 require_once __DIR__ . '/app/config/database.php';
 $pdo = getDBConnection();
 

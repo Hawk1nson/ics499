@@ -1,11 +1,12 @@
 <?php
 require __DIR__ . '/app/middleware/auth.php';
 require_once __DIR__ . '/app/config/database.php';
+require_once __DIR__ . '/app/config/permissions.php';
 
 $pdo = getDBConnection();
 
-$_userRole = $_SESSION['user_role'] ?? '';
-$_isClinicalRole = in_array($_userRole, ['DOCTOR', 'TRIAGE_NURSE', 'NURSE'], true);
+$_userRole       = $_SESSION['user_role'] ?? '';
+$_isClinicalRole = can($_userRole, 'case_sheets', 'W');
 
 // ── Data for clinical roles ──────────────────────────────────────────────────
 $todayStats     = ['total_today' => 0, 'in_progress' => 0, 'ready' => 0, 'in_review' => 0, 'closed_today' => 0];
@@ -55,6 +56,32 @@ if ($_isClinicalRole) {
 		   FROM events WHERE is_active = 1 AND start_datetime >= NOW()
 		   ORDER BY start_datetime LIMIT 1"
 	)->fetch(PDO::FETCH_ASSOC);
+}
+
+// ── Dashboard counts for new features ───────────────────────────────────────
+$unreadMessages = 0;
+$openTasks      = 0;
+$openFeedback   = 0;
+$userId = (int)$_SESSION['user_id'];
+
+$stmt = $pdo->prepare('SELECT COUNT(*) FROM messages WHERE recipient_user_id = ? AND is_read = 0');
+$stmt->execute([$userId]);
+$unreadMessages = (int)$stmt->fetchColumn();
+
+$stmt = $pdo->prepare(
+	'SELECT COUNT(*) FROM tasks WHERE status != ? AND (created_by_user_id = ? OR assigned_to_user_id = ?)'
+);
+$stmt->execute(['DONE', $userId, $userId]);
+$openTasks = (int)$stmt->fetchColumn();
+
+if (can($_userRole, 'feedback')) {
+	if (can($_userRole, 'feedback', 'W')) {
+		$stmt = $pdo->query("SELECT COUNT(*) FROM feedback WHERE status IN ('OPEN','UNDER_REVIEW')");
+	} else {
+		$stmt = $pdo->prepare("SELECT COUNT(*) FROM feedback WHERE submitted_by_user_id = ? AND status IN ('OPEN','UNDER_REVIEW')");
+		$stmt->execute([$userId]);
+	}
+	$openFeedback = (int)$stmt->fetchColumn();
 }
 
 $roleLabel = [
@@ -248,11 +275,13 @@ $roleLabel = [
 				</div>
 
 				<div class="col-6 col-sm-4 col-md-2 mb-2">
-					<span class="qa-tile qa-disabled">
+					<a href="messages.php" class="qa-tile">
 						<i class="fas fa-envelope qa-icon text-info"></i>
 						<span class="qa-label">Messages</span>
-						<span class="qa-soon">Coming Soon</span>
-					</span>
+						<?php if ($unreadMessages > 0): ?>
+						<span class="qa-badge"><?= $unreadMessages ?></span>
+						<?php endif; ?>
+					</a>
 				</div>
 
 				<div class="col-6 col-sm-4 col-md-2 mb-2">
@@ -264,11 +293,13 @@ $roleLabel = [
 				</div>
 
 				<div class="col-6 col-sm-4 col-md-2 mb-2">
-					<span class="qa-tile qa-disabled">
-						<i class="fas fa-chart-bar qa-icon text-secondary"></i>
-						<span class="qa-label">Reports</span>
-						<span class="qa-soon">Coming Soon</span>
-					</span>
+					<a href="tasks.php" class="qa-tile">
+						<i class="fas fa-tasks qa-icon text-secondary"></i>
+						<span class="qa-label">Tasks</span>
+						<?php if ($openTasks > 0): ?>
+						<span class="qa-badge"><?= $openTasks ?></span>
+						<?php endif; ?>
+					</a>
 				</div>
 			</div>
 
@@ -478,14 +509,23 @@ $roleLabel = [
 						<div class="card-header border-0 d-flex align-items-center justify-content-between">
 							<h3 class="card-title mb-0">
 								<i class="fas fa-tasks mr-2 text-primary"></i>My Tasks
+								<?php if ($openTasks > 0): ?>
+								<span class="badge badge-warning ml-1"><?= $openTasks ?></span>
+								<?php endif; ?>
 							</h3>
-							<span class="badge badge-secondary">Coming Soon</span>
+							<a href="tasks.php" class="btn btn-sm btn-outline-primary">View all</a>
 						</div>
-						<div class="card-body p-0">
-							<div class="coming-soon-banner">
-								<i class="fas fa-clipboard-check"></i>
-								<span>Task management coming soon</span>
-							</div>
+						<div class="card-body p-3">
+							<p class="text-muted mb-2 small">
+								<?php if ($openTasks > 0): ?>
+								You have <strong><?= $openTasks ?></strong> open task<?= $openTasks !== 1 ? 's' : '' ?>.
+								<?php else: ?>
+								<i class="fas fa-check-circle text-success mr-1"></i>No open tasks — all caught up.
+								<?php endif; ?>
+							</p>
+							<a href="tasks.php?action=create" class="btn btn-sm btn-outline-secondary">
+								<i class="fas fa-plus mr-1"></i>New Task
+							</a>
 						</div>
 					</div>
 				</div>
@@ -493,13 +533,57 @@ $roleLabel = [
 
 			<?php else: ?>
 			<!-- ── Non-clinical role landing ───────────────────────── -->
-			<div class="row justify-content-center mt-4">
-				<div class="col-md-6 text-center">
-					<i class="fas fa-heartbeat fa-4x text-primary mb-3"></i>
-					<h3>Welcome to CareSystem</h3>
-					<p class="text-muted">Use the sidebar to navigate to your tools.</p>
-					<a href="profile.php" class="btn btn-outline-primary mr-2"><i class="fas fa-user-circle mr-1"></i>My Profile</a>
-					<a href="settings.php" class="btn btn-outline-secondary"><i class="fas fa-cog mr-1"></i>Settings</a>
+			<div class="row mt-2 mb-4">
+				<div class="col-sm-6 col-md-3 mb-3">
+					<a href="messages.php" class="card text-center p-3 shadow-sm h-100 d-flex flex-column align-items-center justify-content-center text-decoration-none">
+						<i class="fas fa-envelope fa-2x text-info mb-2"></i>
+						<strong>Messages</strong>
+						<?php if ($unreadMessages > 0): ?>
+						<span class="badge badge-danger mt-1"><?= $unreadMessages ?> unread</span>
+						<?php else: ?>
+						<small class="text-muted">Inbox</small>
+						<?php endif; ?>
+					</a>
+				</div>
+				<div class="col-sm-6 col-md-3 mb-3">
+					<a href="tasks.php" class="card text-center p-3 shadow-sm h-100 d-flex flex-column align-items-center justify-content-center text-decoration-none">
+						<i class="fas fa-tasks fa-2x text-primary mb-2"></i>
+						<strong>Tasks</strong>
+						<?php if ($openTasks > 0): ?>
+						<span class="badge badge-warning mt-1"><?= $openTasks ?> open</span>
+						<?php else: ?>
+						<small class="text-muted">To-Do List</small>
+						<?php endif; ?>
+					</a>
+				</div>
+				<?php if (can($_userRole, 'feedback')): ?>
+				<div class="col-sm-6 col-md-3 mb-3">
+					<a href="feedback.php" class="card text-center p-3 shadow-sm h-100 d-flex flex-column align-items-center justify-content-center text-decoration-none">
+						<i class="fas fa-comment-dots fa-2x text-warning mb-2"></i>
+						<strong>Feedback</strong>
+						<?php if ($openFeedback > 0): ?>
+						<span class="badge badge-danger mt-1"><?= $openFeedback ?> open</span>
+						<?php else: ?>
+						<small class="text-muted">Grievances</small>
+						<?php endif; ?>
+					</a>
+				</div>
+				<?php endif; ?>
+				<?php if (can($_userRole, 'assets')): ?>
+				<div class="col-sm-6 col-md-3 mb-3">
+					<a href="assets.php" class="card text-center p-3 shadow-sm h-100 d-flex flex-column align-items-center justify-content-center text-decoration-none">
+						<i class="fas fa-boxes fa-2x text-secondary mb-2"></i>
+						<strong>Assets</strong>
+						<small class="text-muted">Resource Library</small>
+					</a>
+				</div>
+				<?php endif; ?>
+				<div class="col-sm-6 col-md-3 mb-3">
+					<a href="profile.php" class="card text-center p-3 shadow-sm h-100 d-flex flex-column align-items-center justify-content-center text-decoration-none">
+						<i class="fas fa-user-circle fa-2x text-success mb-2"></i>
+						<strong>My Profile</strong>
+						<small class="text-muted">Account settings</small>
+					</a>
 				</div>
 			</div>
 			<?php endif; ?>

@@ -13,6 +13,7 @@ ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
 require_once __DIR__ . '/app/config/session.php';
+require_once __DIR__ . '/app/config/permissions.php';
 header('Content-Type: application/json');
 
 if (!isset($_SESSION['user_id'])) {
@@ -21,8 +22,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $role = $_SESSION['user_role'] ?? '';
-$allowedRoles = ['DOCTOR', 'TRIAGE_NURSE', 'NURSE'];
-if (!in_array($role, $allowedRoles, true)) {
+if (!can($role, 'case_sheets', 'W')) {
 	echo json_encode(['success' => false, 'message' => 'Forbidden']);
 	exit;
 }

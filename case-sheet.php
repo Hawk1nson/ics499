@@ -1,16 +1,25 @@
 <?php
-// Start session for data storage
-session_start();
+require_once __DIR__ . '/app/config/session.php';
+require_once __DIR__ . '/app/config/permissions.php';
+
+// Authentication guard
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit;
+}
+
+// Role guard: must have at least read access to case sheets
+if (!can($_SESSION['user_role'] ?? '', 'case_sheets')) {
+    $_SESSION['dashboard_notice'] = 'You do not have permission to access this page.';
+    header('Location: dashboard.php');
+    exit;
+}
 
 // Get case_sheet_id and patient_id from URL
 $case_sheet_id = $_GET['case_sheet_id'] ?? null;
 $patient_id = $_GET['patient_id'] ?? null;
 
-// TODO: Add validation and database fetch for case sheet
-// For now, we'll work with the patient_id
-
 if (!$patient_id) {
-    // Redirect to patient selection or show error
     header('Location: dashboard.php');
     exit;
 }

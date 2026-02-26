@@ -9,10 +9,16 @@ ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
 require_once __DIR__ . '/app/config/session.php';
+require_once __DIR__ . '/app/config/permissions.php';
 header('Content-Type: application/json');
 
 if (!isset($_SESSION['user_id'])) {
 	echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+	exit;
+}
+
+if (!can($_SESSION['user_role'] ?? '', 'patient_data')) {
+	echo json_encode(['success' => false, 'message' => 'Forbidden']);
 	exit;
 }
 
