@@ -1,19 +1,27 @@
 <?php
-$currentPage = $_SERVER['PHP_SELF'];
-$isAdminPage = (strpos($currentPage, 'admin.php') !== false);
-$isAdminPanel = ($isAdminPage && ($_GET['page'] ?? '') === 'panel');
-$isAdminDashboard = ($isAdminPage && !$isAdminPanel);
-$isDashboardPage = (strpos($currentPage, 'dashboard.php') !== false && !$isAdminPage);
-$isProfilePage = (strpos($currentPage, 'profile.php') !== false);
-$isSettingsPage = (strpos($currentPage, 'settings.php') !== false);
-$isAssetsPage = (strpos($currentPage, 'assets.php') !== false);
-$isCalendarPage = (strpos($currentPage, 'calendar.php') !== false);
-$isIntakePage = (strpos($currentPage, 'intake.php') !== false);
-$isReviewPage = (strpos($currentPage, 'review.php') !== false);
+if (!function_exists('can')) {
+	require_once __DIR__ . '/../config/permissions.php';
+}
 
-$_userRole = $_SESSION['user_role'] ?? '';
-$_isAdminRole = in_array($_userRole, ['SUPER_ADMIN', 'ADMIN'], true);
-$_isClinicalRole = in_array($_userRole, ['DOCTOR', 'TRIAGE_NURSE', 'NURSE'], true);
+$currentPage = $_SERVER['PHP_SELF'];
+$isAdminPage      = (strpos($currentPage, 'admin.php')     !== false);
+$isAdminPanel     = ($isAdminPage && ($_GET['page'] ?? '') === 'panel');
+$isAdminDashboard = ($isAdminPage && !$isAdminPanel);
+$isDashboardPage  = (strpos($currentPage, 'dashboard.php') !== false && !$isAdminPage);
+$isProfilePage    = (strpos($currentPage, 'profile.php')   !== false);
+$isSettingsPage   = (strpos($currentPage, 'settings.php')  !== false);
+$isAssetsPage     = (strpos($currentPage, 'assets.php')    !== false);
+$isCalendarPage   = (strpos($currentPage, 'calendar.php')  !== false);
+$isIntakePage     = (strpos($currentPage, 'intake.php')    !== false);
+$isReviewPage     = (strpos($currentPage, 'review.php')    !== false);
+$isFeedbackPage   = (strpos($currentPage, 'feedback.php')  !== false);
+$isMessagesPage   = (strpos($currentPage, 'messages.php')  !== false);
+$isTasksPage      = (strpos($currentPage, 'tasks.php')     !== false);
+
+$_userRole    = $_SESSION['user_role'] ?? '';
+$_isAdminRole = can($_userRole, 'users');
+// Clinical nav group: any role with write access to case sheets
+$_isClinicalRole = can($_userRole, 'case_sheets', 'W');
 ?>
 <aside class="main-sidebar sidebar-dark-primary elevation-3">
 	<a href="#" class="brand-link text-center">
@@ -79,24 +87,37 @@ $_isClinicalRole = in_array($_userRole, ['DOCTOR', 'TRIAGE_NURSE', 'NURSE'], tru
 				</li>
 				<?php endif; ?>
 
+				<?php if (can($_userRole, 'events')): ?>
 				<li class="nav-item">
 					<a href="calendar.php" class="nav-link <?= $isCalendarPage ? 'active' : '' ?>">
 						<i class="nav-icon fas fa-calendar-alt"></i>
 						<p>Calendar</p>
 					</a>
 				</li>
+				<?php endif; ?>
+
+				<?php if (can($_userRole, 'feedback')): ?>
 				<li class="nav-item">
-					<a href="#" class="nav-link">
+					<a href="feedback.php" class="nav-link <?= $isFeedbackPage ? 'active' : '' ?>">
+						<i class="nav-icon fas fa-comment-dots"></i>
+						<p>Feedback</p>
+					</a>
+				</li>
+				<?php endif; ?>
+
+				<li class="nav-item">
+					<a href="messages.php" class="nav-link <?= $isMessagesPage ? 'active' : '' ?>">
 						<i class="nav-icon fas fa-envelope"></i>
 						<p>Messages</p>
 					</a>
 				</li>
 				<li class="nav-item">
-					<a href="#" class="nav-link">
+					<a href="tasks.php" class="nav-link <?= $isTasksPage ? 'active' : '' ?>">
 						<i class="nav-icon fas fa-tasks"></i>
 						<p>Tasks</p>
 					</a>
 				</li>
+
 				<li class="nav-item">
 					<a href="profile.php" class="nav-link <?= $isProfilePage ? 'active' : '' ?>">
 						<i class="nav-icon fas fa-user-circle"></i>
@@ -117,6 +138,9 @@ $_isClinicalRole = in_array($_userRole, ['DOCTOR', 'TRIAGE_NURSE', 'NURSE'], tru
 						<p>Admin Panel</p>
 					</a>
 				</li>
+				<?php endif; ?>
+
+				<?php if (can($_userRole, 'assets')): ?>
 				<li class="nav-item">
 					<a href="assets.php" class="nav-link <?= $isAssetsPage ? 'active' : '' ?>">
 						<i class="nav-icon fas fa-boxes"></i>
