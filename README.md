@@ -47,6 +47,7 @@ A PHP/MySQL web application for patient care management, built as a capstone pro
 d3s3/
 ├── index.php, login.php, dashboard.php, ...   # Entry points
 ├── patients.php, appointments.php             # Patient & scheduling entry points
+├── lab_results.php                            # Labwork queue entry point
 ├── feedback.php, messages.php, tasks.php      # Staff feature entry points
 ├── assets.php, calendar.php, reports.php      # Resource & planning entry points
 ├── app/
@@ -60,7 +61,7 @@ d3s3/
 │   │   ├── ClinicalController.php   # Intake, case sheets, queue
 │   │   ├── PatientController.php    # Patient records, profile, access log
 │   │   ├── AppointmentController.php# Appointments list, doctor assignment
-│   │   ├── LabResultsController.php # Lab results (placeholder)
+│   │   ├── LabResultsController.php # Labwork queue and result completion
 │   │   ├── FeedbackController.php   # Grievance/feedback tracking
 │   │   ├── MessagingController.php  # Internal messaging
 │   │   └── TaskController.php       # Task management
@@ -73,6 +74,7 @@ d3s3/
 │       ├── patients.php         # Patient search / list
 │       ├── patient_profile.php  # 4-tab patient profile
 │       ├── appointments.php     # Appointments list & assignment
+│       ├── lab_results.php      # Labwork queue & result completion
 │       ├── feedback.php, feedback_detail.php, feedback_submit.php
 │       ├── messages.php
 │       ├── tasks.php
@@ -148,7 +150,7 @@ d3s3/
 - Added `PARAMEDIC` and `EDUCATION_TEAM` roles with appropriate permission scopes
 
 ### Centralized Permission System *(2026-02-24)*
-- `app/config/permissions.php` — 9-role × 8-resource access matrix
+- `app/config/permissions.php` — 9-role × 10-resource access matrix
 - `can(string $role, string $resource, string $action)` helper used throughout all controllers and views
 - DB-backed `role_permissions` table with hardcoded fallback for resilience
 - Admin UI for viewing and editing permissions at runtime
@@ -183,9 +185,13 @@ d3s3/
 - Doctor view shows their assigned appointments only
 - AJAX patient search and doctor list endpoints for the assignment workflow
 
-### Lab Results *(2026-02-26 — placeholder)*
-- `lab_results.php` entry point and `LabResultsController` scaffolded
-- Full implementation pending
+### Labwork *(2026-03-02)*
+- Labwork queue page (`lab_results.php`) showing pending lab orders in FIFO order
+- "Order Lab Test" button in the intake form's Labs tab opens a modal with 50+ categorized tests and a notes field; submitted via AJAX to `ClinicalController::orderLabTest()`
+- Pending orders are completable via a "Complete" modal that captures result notes; submitted via AJAX to `LabResultsController::completeOrder()`
+- `lab_orders` table (migration 020) tracks each ordered test with status `PENDING` → `COMPLETED`
+- `labwork` permission resource (migration 021): SUPER_ADMIN / ADMIN / DOCTOR / TRIAGE_NURSE / NURSE = RW; PARAMEDIC = R; others = none
+- Sidebar link renamed from "Lab Results" to "Labwork"
 
 ### Security Hardening *(2026-03-02)*
 - `logout.php` now performs a full three-step session teardown: clears `$_SESSION`, expires the session cookie in the browser via `setcookie()`, then calls `session_destroy()`
