@@ -4,10 +4,6 @@
  * API endpoint to fetch patient information for case sheet.
  */
 
-error_reporting(E_ALL);
-ini_set('display_errors', 0);
-ini_set('log_errors', 1);
-
 require_once __DIR__ . '/app/config/session.php';
 require_once __DIR__ . '/app/config/permissions.php';
 header('Content-Type: application/json');
@@ -25,7 +21,7 @@ if (!can($_SESSION['user_role'] ?? '', 'patient_data')) {
 require_once __DIR__ . '/app/config/database.php';
 $pdo = getDBConnection();
 
-$patient_id = $_GET['patient_id'] ?? null;
+$patient_id = (int)($_GET['patient_id'] ?? 0);
 
 if (!$patient_id) {
 	echo json_encode(['success' => false, 'message' => 'Patient ID required']);

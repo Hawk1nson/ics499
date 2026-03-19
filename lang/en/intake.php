@@ -12,6 +12,8 @@ return [
     'tab_summary'                 => 'Summary',
     'tab_intake'                  => 'Intake',
     'dark_mode'                   => 'Dark mode',
+    'display_settings'            => 'Display Settings',
+    'language'                    => 'Language',
     'dashboard'                   => 'Dashboard',
     'page_title'                  => 'Patient Intake',
     'subtitle_ncd'                => 'NCD Screening and Treatment Documentation',

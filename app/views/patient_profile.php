@@ -61,7 +61,7 @@ $_accessTypeLabels = [
 ];
 
 // ── Computed display values ──────────────────────────────────────────────────
-$_fullName  = htmlspecialchars($patient['first_name'] . (isset($patient['last_name']) ? ' ' . $patient['last_name'] : ''));
+$_fullName  = htmlspecialchars(($patient['first_name'] ?? '') . (isset($patient['last_name']) ? ' ' . $patient['last_name'] : ''));
 $_dob       = $patient['date_of_birth']  ? date('d M Y', strtotime($patient['date_of_birth']))  : null;
 $_firstSeen = $patient['first_seen_date'] ? date('d M Y', strtotime($patient['first_seen_date'])) : null;
 

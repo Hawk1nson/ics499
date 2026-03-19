@@ -4,11 +4,8 @@
  * API endpoint to fetch the most recent previous case sheet for a patient.
  */
 
-error_reporting(E_ALL);
-ini_set('display_errors', 0);
-ini_set('log_errors', 1);
-
 require_once __DIR__ . '/app/config/session.php';
+require_once __DIR__ . '/app/config/permissions.php';
 header('Content-Type: application/json');
 
 if (!isset($_SESSION['user_id'])) {
@@ -16,11 +13,16 @@ if (!isset($_SESSION['user_id'])) {
 	exit;
 }
 
+if (!can($_SESSION['user_role'] ?? '', 'case_sheets')) {
+	echo json_encode(['success' => false, 'message' => 'Forbidden']);
+	exit;
+}
+
 require_once __DIR__ . '/app/config/database.php';
 $pdo = getDBConnection();
 
-$patient_id = $_GET['patient_id'] ?? null;
-$current_case_sheet_id = $_GET['current_case_sheet_id'] ?? null;
+$patient_id            = (int)($_GET['patient_id'] ?? 0);
+$current_case_sheet_id = (int)($_GET['current_case_sheet_id'] ?? 0);
 
 if (!$patient_id || !$current_case_sheet_id) {
 	echo json_encode(['success' => false, 'message' => 'Patient ID and current case sheet ID required']);

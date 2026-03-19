@@ -186,6 +186,9 @@ class FeedbackController
 		if (strlen($subject) > 200) {
 			return 'Subject may not exceed 200 characters.';
 		}
+		if (strlen($description) > 5000) {
+			return 'Description may not exceed 5,000 characters.';
+		}
 
 		$pdo  = getDBConnection();
 		$stmt = $pdo->prepare(

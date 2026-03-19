@@ -12,6 +12,8 @@ return [
     'tab_summary'                 => 'సారాంశం',
     'tab_intake'                  => 'ఇంటేక్',
     'dark_mode'                   => 'డార్క్ మోడ్',
+    'display_settings'            => 'ప్రదర్శన సెట్టింగులు',
+    'language'                    => 'భాష',
     'dashboard'                   => 'డాష్‌బోర్డ్',
     'page_title'                  => 'రోగి ఇంటేక్',
     'subtitle_ncd'                => 'అంటువ్యాధులు కాని రోగాల నిర్ధారణ మరియు చికిత్స వివరాలు',

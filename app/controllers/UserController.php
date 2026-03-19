@@ -339,6 +339,28 @@ class UserController
             exit;
         }
 
+        // ── AJAX language switch (fire-and-forget from JS) ────
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_GET['ajax'] ?? '') === 'language') {
+            header('Content-Type: application/json');
+            if (!hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'] ?? '')) {
+                echo json_encode(['error' => 'Invalid token']);
+                exit;
+            }
+            $language = $_POST['language'] ?? 'en';
+            if (!in_array($language, ['en', 'te'], true)) {
+                echo json_encode(['error' => 'Invalid language']);
+                exit;
+            }
+            $pdo->prepare(
+                'INSERT INTO user_preferences (account_type, account_id, language)
+                 VALUES (?, ?, ?)
+                 ON DUPLICATE KEY UPDATE language = VALUES(language)'
+            )->execute(['STAFF', $_SESSION['user_id'], $language]);
+            $_SESSION['language'] = $language;
+            echo json_encode(['ok' => true]);
+            exit;
+        }
+
         // ── One-time flash ──────────────────────────────────────
         $flashSuccess = null;
         if (isset($_SESSION['settings_success'])) {

@@ -15,7 +15,7 @@ $calendarEvents  = [];
 $nextEvent       = null;
 $staleSheets     = [];
 
-if ($_isClinicalRole) {
+if ($_isClinicalRole) { try {
 	// ── Today's visit count (patients who came in today) ─────────────────
 	$rowToday = $pdo->query(
 		"SELECT COUNT(*) AS total_today,
@@ -152,7 +152,9 @@ if ($_isClinicalRole) {
 		$_stmt->execute($_apptParams);
 		$todayScheduledAppts = $_stmt->fetchAll(PDO::FETCH_ASSOC);
 	}
-}
+} catch (PDOException $e) {
+	// DB error - leave all clinical stats at their zero defaults
+} }
 
 // ── Dashboard counts for new features ───────────────────────────────────────
 $unreadMessages = 0;
@@ -160,24 +162,28 @@ $openTasks      = 0;
 $openFeedback   = 0;
 $userId = (int)$_SESSION['user_id'];
 
-$stmt = $pdo->prepare('SELECT COUNT(*) FROM messages WHERE recipient_user_id = ? AND is_read = 0');
-$stmt->execute([$userId]);
-$unreadMessages = (int)$stmt->fetchColumn();
+try {
+	$stmt = $pdo->prepare('SELECT COUNT(*) FROM messages WHERE recipient_user_id = ? AND is_read = 0');
+	$stmt->execute([$userId]);
+	$unreadMessages = (int)$stmt->fetchColumn();
 
-$stmt = $pdo->prepare(
-	'SELECT COUNT(*) FROM tasks WHERE status != ? AND (created_by_user_id = ? OR assigned_to_user_id = ?)'
-);
-$stmt->execute(['DONE', $userId, $userId]);
-$openTasks = (int)$stmt->fetchColumn();
+	$stmt = $pdo->prepare(
+		'SELECT COUNT(*) FROM tasks WHERE status != ? AND (created_by_user_id = ? OR assigned_to_user_id = ?)'
+	);
+	$stmt->execute(['DONE', $userId, $userId]);
+	$openTasks = (int)$stmt->fetchColumn();
 
-if (can($_userRole, 'feedback')) {
-	if (can($_userRole, 'feedback', 'W')) {
-		$stmt = $pdo->query("SELECT COUNT(*) FROM feedback WHERE status IN ('OPEN','UNDER_REVIEW')");
-	} else {
-		$stmt = $pdo->prepare("SELECT COUNT(*) FROM feedback WHERE submitted_by_user_id = ? AND status IN ('OPEN','UNDER_REVIEW')");
-		$stmt->execute([$userId]);
+	if (can($_userRole, 'feedback')) {
+		if (can($_userRole, 'feedback', 'W')) {
+			$stmt = $pdo->query("SELECT COUNT(*) FROM feedback WHERE status IN ('OPEN','UNDER_REVIEW')");
+		} else {
+			$stmt = $pdo->prepare("SELECT COUNT(*) FROM feedback WHERE submitted_by_user_id = ? AND status IN ('OPEN','UNDER_REVIEW')");
+			$stmt->execute([$userId]);
+		}
+		$openFeedback = (int)$stmt->fetchColumn();
 	}
-	$openFeedback = (int)$stmt->fetchColumn();
+} catch (PDOException $e) {
+	// DB error - leave counts at zero
 }
 
 $roleLabel = [

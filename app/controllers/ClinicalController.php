@@ -37,6 +37,7 @@ class ClinicalController
 		$formError = null;
 		$caseSheet = null;
 		$patient   = null;
+		$labOrders = [];
 
 		// Step 2: If case_sheet_id in URL, load the full form
 		$caseSheetId = (int)($_GET['case_sheet_id'] ?? 0);

@@ -520,10 +520,14 @@ class AdminController
      */
     public function reports(): void
     {
-        $pdo = getDBConnection();
+        // ── Role guard: SUPER_ADMIN and ADMIN only ─────────────
+        if (!can($_SESSION['user_role'] ?? '', 'users')) {
+            $_SESSION['dashboard_notice'] = 'You do not have permission to access Reports.';
+            header('Location: dashboard.php');
+            exit;
+        }
 
-        // Reports are accessible by all authenticated users.
-        // Role-scoped filtering can be added within the view later if needed.
+        $pdo = getDBConnection();
 
         // ── Exportable tables whitelist ────────────────────────
         $exportables = [

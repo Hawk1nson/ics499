@@ -198,7 +198,7 @@ $pageTitle = "Case Sheet";
 		</ul>
 	</nav>
 
-	<?php include __DIR__ . '/app/views/_sidebar.php'; ?>
+	<?php require __DIR__ . '/app/views/_sidebar.php'; ?>
 
 	<div class="content-wrapper">
 		<div class="content-header">
@@ -595,7 +595,7 @@ $pageTitle = "Case Sheet";
                                             <label for="condition_htn" class="form-label">HTN (Hypertension)</label>
                                             <select class="form-control" id="condition_htn" name="condition_htn" data-table="case_sheets">
                                                 <option value="NO">No</option>
-                                                <option value="CURRENT">Current</option>
+                                                <option value="CURRENT">Present</option>
                                                 <option value="PAST">Past</option>
                                             </select>
                                         </div>

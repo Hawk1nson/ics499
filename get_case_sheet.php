@@ -4,10 +4,6 @@
  * API endpoint to fetch case sheet information.
  */
 
-error_reporting(E_ALL);
-ini_set('display_errors', 0);
-ini_set('log_errors', 1);
-
 require_once __DIR__ . '/app/config/session.php';
 require_once __DIR__ . '/app/config/permissions.php';
 header('Content-Type: application/json');
@@ -25,7 +21,7 @@ if (!can($_SESSION['user_role'] ?? '', 'case_sheets')) {
 require_once __DIR__ . '/app/config/database.php';
 $pdo = getDBConnection();
 
-$case_sheet_id = $_GET['case_sheet_id'] ?? null;
+$case_sheet_id = (int)($_GET['case_sheet_id'] ?? 0);
 
 if (!$case_sheet_id) {
 	echo json_encode(['success' => false, 'message' => 'Case sheet ID required']);

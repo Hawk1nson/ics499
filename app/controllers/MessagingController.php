@@ -39,6 +39,12 @@ class MessagingController
 			unset($_SESSION['messages_success']);
 		}
 
+		$flashError = null;
+		if (isset($_SESSION['messages_error'])) {
+			$flashError = $_SESSION['messages_error'];
+			unset($_SESSION['messages_error']);
+		}
+
 		$stmt = $pdo->prepare(
 			'SELECT m.*, u.first_name AS sender_first, u.last_name AS sender_last
 			   FROM messages m
@@ -132,12 +138,14 @@ class MessagingController
 		$message = $stmt->fetch();
 
 		if (!$message) {
+			$_SESSION['messages_error'] = 'Message not found.';
 			header('Location: messages.php');
 			exit;
 		}
 
 		// Only sender or recipient may read the message
 		if ((int)$message['sender_user_id'] !== $userId && (int)$message['recipient_user_id'] !== $userId) {
+			$_SESSION['messages_error'] = 'You do not have permission to view that message.';
 			header('Location: messages.php');
 			exit;
 		}
@@ -176,6 +184,9 @@ class MessagingController
 		}
 		if (strlen($subject) > 200) {
 			return 'Subject may not exceed 200 characters.';
+		}
+		if (strlen($body) > 10000) {
+			return 'Message body may not exceed 10,000 characters.';
 		}
 
 		// Verify recipient exists and is active

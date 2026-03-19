@@ -29,13 +29,14 @@ $_userRole = $_SESSION['user_role'] ?? '';
 
 $_navCanCaseSheetsWrite = can($_userRole, 'case_sheets', 'W'); // Intake, My Reviews
 $_navCanCaseSheetsRead  = can($_userRole, 'case_sheets');      // Appointments
-$_navCanPatientData     = can($_userRole, 'patient_data');     // Patients, Lab Results
+$_navCanPatientData     = can($_userRole, 'patient_data');     // Patients
 $_navCanEvents          = can($_userRole, 'events');           // Calendar
 $_navCanFeedback        = can($_userRole, 'feedback');         // Feedback
 $_navCanMessages        = can($_userRole, 'messages');         // Messages
 $_navCanTasks           = can($_userRole, 'tasks');            // Tasks
 $_navCanAssets          = can($_userRole, 'assets');           // Assets
 $_navCanUsers           = can($_userRole, 'users');            // Admin Panel
+$_navCanLabwork         = can($_userRole, 'labwork');          // Labwork
 
 // ── Sidebar appointment badge (today's count) ───────────────────────────────
 // Gate matches the appointments page access requirement (case_sheets read).
@@ -55,6 +56,19 @@ if ($_navCanCaseSheetsRead && !$isAppointmentsPage) {
 		$_apptStmt->execute($_apptParams);
 		$_apptTodayCount = (int)$_apptStmt->fetchColumn();
 	} catch (Throwable $e) { /* silently skip if table doesn't exist yet */ }
+}
+
+// \u2500\u2500 Sidebar unread message badge \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+$_msgUnreadCount = 0;
+if ($_navCanMessages && !$isMessagesPage) {
+	try {
+		$_msgPdo = getDBConnection();
+		$_msgStmt = $_msgPdo->prepare(
+			'SELECT COUNT(*) FROM messages WHERE recipient_user_id = ? AND is_read = 0'
+		);
+		$_msgStmt->execute([$_SESSION['user_id']]);
+		$_msgUnreadCount = (int)$_msgStmt->fetchColumn();
+	} catch (Throwable $e) { /* silently skip */ }
 }
 ?>
 <aside class="main-sidebar sidebar-dark-primary elevation-3">
@@ -141,8 +155,8 @@ if ($_navCanCaseSheetsRead && !$isAppointmentsPage) {
 				</li>
 				<?php endif; ?>
 
-				<!-- Lab Results – requires patient_data read -->
-				<?php if ($_navCanPatientData): ?>
+				<!-- Lab Results – requires labwork read -->
+				<?php if ($_navCanLabwork): ?>
 				<li class="nav-item">
 					<a href="lab_results.php" class="nav-link <?= $isLabResultsPage ? 'active' : '' ?>">
 						<i class="nav-icon fas fa-vial"></i>
@@ -177,6 +191,9 @@ if ($_navCanCaseSheetsRead && !$isAppointmentsPage) {
 					<a href="messages.php" class="nav-link <?= $isMessagesPage ? 'active' : '' ?>">
 						<i class="nav-icon fas fa-envelope"></i>
 						<p>Messages</p>
+						<?php if ($_msgUnreadCount > 0): ?>
+						<span class="right badge badge-danger"><?= $_msgUnreadCount ?></span>
+						<?php endif; ?>
 					</a>
 				</li>
 				<?php endif; ?>
