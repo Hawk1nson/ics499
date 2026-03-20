@@ -92,15 +92,29 @@
 				<div class="row">
 					<!-- Messages -->
 					<div class="col-lg-6 mb-4">
-						<div class="card shadow-sm h-100">
-							<div class="card-header border-0">
-								<h3 class="card-title mb-0"><i class="fas fa-envelope mr-2 text-primary"></i>Messages</h3>
+						<a href="messages.php" class="text-decoration-none">
+							<div class="card shadow-sm h-100">
+								<div class="card-header border-0 d-flex justify-content-between align-items-center">
+									<h3 class="card-title mb-0"><i class="fas fa-envelope mr-2 text-primary"></i>Messages</h3>
+									<?php if ($unreadMessages > 0): ?>
+									<span class="badge badge-danger badge-pill"><?= $unreadMessages ?> unread</span>
+									<?php else: ?>
+									<span class="badge badge-secondary badge-pill">No new messages</span>
+									<?php endif; ?>
+								</div>
+								<div class="card-body text-center py-4">
+									<?php if ($unreadMessages > 0): ?>
+									<i class="fas fa-envelope fa-3x mb-3 d-block text-danger"></i>
+									<p class="mb-0 font-weight-bold text-danger">
+										You have <?= $unreadMessages ?> unread message<?= $unreadMessages !== 1 ? 's' : '' ?>
+									</p>
+									<?php else: ?>
+									<i class="fas fa-envelope-open-text fa-3x mb-3 d-block text-muted"></i>
+									<p class="mb-0 text-muted">Your inbox is up to date</p>
+									<?php endif; ?>
+								</div>
 							</div>
-							<div class="card-body text-center text-muted py-5">
-								<i class="fas fa-envelope-open-text fa-3x mb-3 d-block"></i>
-								<p class="mb-0">Messages will appear here.</p>
-							</div>
-						</div>
+						</a>
 					</div>
 
 					<!-- Calendar -->

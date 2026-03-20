@@ -17,6 +17,14 @@ class AdminController
             'SELECT event_id, title, description, event_type, start_datetime, end_datetime, status, location_name
                FROM events WHERE is_active = 1 ORDER BY start_datetime'
         )->fetchAll();
+
+        $unreadMessages = 0;
+        try {
+            $stmt = $pdo->prepare('SELECT COUNT(*) FROM messages WHERE recipient_user_id = ? AND is_read = 0');
+            $stmt->execute([$_SESSION['user_id']]);
+            $unreadMessages = (int)$stmt->fetchColumn();
+        } catch (Throwable $e) { /* table may not exist yet */ }
+
         require __DIR__ . '/../views/admin/dashboard.php';
     }
 
@@ -756,7 +764,8 @@ class AdminController
         } catch (\PDOException $e) {
             $pdo->rollBack();
             fclose($handle);
-            return 'Import failed on line ' . $lineNum . ': ' . $e->getMessage();
+            error_log('CSV import error on line ' . $lineNum . ': ' . $e->getMessage());
+            return 'Import failed on line ' . $lineNum . ': a database error occurred.';
         }
 
         fclose($handle);
