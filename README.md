@@ -197,6 +197,32 @@ d3s3/
 - `logout.php` now performs a full three-step session teardown: clears `$_SESSION`, expires the session cookie in the browser via `setcookie()`, then calls `session_destroy()`
 - `session.php` now explicitly sets `lifetime` and `path` in `session_set_cookie_params()` instead of relying on php.ini defaults
 
+### Security & Quality Audit *(2026-03-04)*
+- `update_patient.php` — added CSRF token validation and a strict field-name whitelist; removed debug `error_reporting` calls
+- `.htaccess` — added `Content-Security-Policy`, `Referrer-Policy`, and `Permissions-Policy` response headers
+- Message body capped at 10 000 characters; feedback description capped at 5 000 characters
+- Clinical dashboard DB queries wrapped in `try-catch` so a missing table never causes a fatal error
+- Sidebar Labwork nav link now correctly gates on the `labwork` permission resource (was incorrectly using `patient_data`)
+- Reports page access restricted to `SUPER_ADMIN` / `ADMIN` only
+- `MessagingController` sets a flash error on silent redirects; inbox now consumes `$_SESSION['messages_error']`
+- `patient_profile.php` null-coalescing guard on `first_name` to prevent notices on incomplete records
+
+### Multilingual Support (i18n) *(2026-03-20)*
+- `load_language()` helper in `app/helpers/i18n.php` — loads a PHP array of key → string translations at runtime; falls back to English on missing keys
+- Language files under `lang/en/` (English) and `lang/te/` (Telugu) — currently covering the full intake form
+- `__('key')` wrapper used throughout `app/views/intake.php` for all user-visible strings
+- `user_preferences` table stores per-user language selection; preference loaded into `$_SESSION['language']` on every authenticated request
+- All intake form tabs and labels fully translated into Telugu (Phase 1 + Phase 2)
+
+### UX Improvements — Gear Settings Panel *(2026-03-20)*
+- Replaced the inline "Dark mode" toggle in every page's navbar with a gear icon (⚙) button
+- Clicking the gear opens a slide-down settings panel containing:
+  - Dark mode toggle (persisted to server via `settings.php?ajax=theme`)
+  - Language switcher (English / తెలుగు) for all pages — preference saved via `settings.php?ajax=language` and session-persisted
+- Panel CSS and JS moved to shared `assets/css/theme.css` and `assets/js/theme-toggle.js`; zero per-page duplication
+- Unread message count badge (red) added to the Messages link in the sidebar
+- Fixed 9 views that were referencing the non-existent `theme.js` — now correctly point to `theme-toggle.js`
+
 ## License
 
 MIT — see [LICENSE](LICENSE) for details.
