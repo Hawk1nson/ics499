@@ -223,6 +223,29 @@ d3s3/
 - Unread message count badge (red) added to the Messages link in the sidebar
 - Fixed 9 views that were referencing the non-existent `theme.js` — now correctly point to `theme-toggle.js`
 
+### Admin Dashboard Enhancements *(2026-03-20)*
+- **Messages tile** — shows live unread count (red badge) for the logged-in admin; links to `messages.php`
+
+### Internal Messaging — Multi-Recipient & Reply All *(2026-03-24)*
+- Migration 022 adds `thread_id` to `messages`; existing rows backfilled so each legacy message forms its own thread
+- Compose now supports up to 20 recipients via a multi-select list; self silently removed
+- **Reply** pre-selects the sender; **Reply All** pre-selects all thread participants except self
+- View page shows full recipient list and Reply / Reply All buttons side-by-side for threads
+- Inbox rows are now fully clickable (replaced eye-icon button)
+
+### i18n — CSV Migration & Sidebar Localisation *(2026-03-24)*
+- Language files consolidated into `lang/labels_en.csv` and `lang/labels_te.csv`; per-page PHP arrays removed
+- All sidebar navigation and role labels run through `__()` so they translate when the user switches language
+
+### Calendar — Event Creation, Self-Hosted Assets & Visual Polish *(2026-03-24 – 2026-03-25)*
+- **New Event** modal (admin/write-access roles): AJAX POST with CSRF; new event added to live calendar without page reload
+- **Smart `initialDate`**: calendar opens on the nearest upcoming event (or most recent past event) instead of always defaulting to the current month
+- **Self-hosted FullCalendar 5.11.5** (`assets/js/fullcalendar.min.js`, `assets/css/fullcalendar.min.css`) — no CDN dependency
+- **Brand-integrated styling**: toolbar buttons use `--brand-primary`, today cell rendered as a filled teal circle, borders use `--border-soft`; full dark-mode support
+- **Custom event content**: type-specific FontAwesome icons (medical camp, seminar, meeting, etc.) on each event pill
+- **Tablet-optimised**: 44 px tap targets, scale-on-tap feedback, `fixedWeekCount: false`, `dayMaxEvents: 3`, `nowIndicator: true`, simplified 3-view toolbar (Month / Week / List)
+- **Dashboard widget**: compact `listMonth` view with scoped brand-colour styling
+
 ## License
 
 MIT — see [LICENSE](LICENSE) for details.
