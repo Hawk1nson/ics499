@@ -56,38 +56,43 @@ class MessagingController
 		if (!$isPanel) {
 			$listTab = ($action === 'sent') ? 'sent' : 'inbox';
 
-			if ($listTab === 'sent') {
-				$stmt = $pdo->prepare(
-					'SELECT MIN(m.message_id) AS message_id,
-					        m.thread_id,
-					        GROUP_CONCAT(u.first_name, \' \', u.last_name
-					                     ORDER BY u.last_name SEPARATOR \', \') AS recipients_list,
-					        COUNT(*) AS recipient_count,
-					        MIN(m.subject) AS subject,
-					        MIN(m.sent_at)  AS sent_at
-					   FROM messages m
-					   JOIN users u ON m.recipient_user_id = u.user_id
-					  WHERE m.sender_user_id = ?
-					  GROUP BY m.thread_id
-					  ORDER BY sent_at DESC'
-				);
-			} else {
-				$stmt = $pdo->prepare(
-					'SELECT m.*, u.first_name AS sender_first, u.last_name AS sender_last
-					   FROM messages m
-					   JOIN users u ON m.sender_user_id = u.user_id
-					  WHERE m.recipient_user_id = ?
-					  ORDER BY m.sent_at DESC'
-				);
-			}
-			$stmt->execute([$userId]);
-			$listMessages = $stmt->fetchAll();
+			try {
+				if ($listTab === 'sent') {
+					$stmt = $pdo->prepare(
+						'SELECT MIN(m.message_id) AS message_id,
+						        m.thread_id,
+						        GROUP_CONCAT(u.first_name, \' \', u.last_name
+						                     ORDER BY u.last_name SEPARATOR \', \') AS recipients_list,
+						        COUNT(*) AS recipient_count,
+						        MIN(m.subject) AS subject,
+						        MIN(m.sent_at)  AS sent_at
+						   FROM messages m
+						   JOIN users u ON m.recipient_user_id = u.user_id
+						  WHERE m.sender_user_id = ?
+						  GROUP BY m.thread_id
+						  ORDER BY sent_at DESC'
+					);
+				} else {
+					$stmt = $pdo->prepare(
+						'SELECT m.*, u.first_name AS sender_first, u.last_name AS sender_last
+						   FROM messages m
+						   JOIN users u ON m.sender_user_id = u.user_id
+						  WHERE m.recipient_user_id = ?
+						  ORDER BY m.sent_at DESC'
+					);
+				}
+				$stmt->execute([$userId]);
+				$listMessages = $stmt->fetchAll();
 
-			$stmt = $pdo->prepare(
-				'SELECT COUNT(*) FROM messages WHERE recipient_user_id = ? AND is_read = 0'
-			);
-			$stmt->execute([$userId]);
-			$unreadCount = (int)$stmt->fetchColumn();
+				$stmt = $pdo->prepare(
+					'SELECT COUNT(*) FROM messages WHERE recipient_user_id = ? AND is_read = 0'
+				);
+				$stmt->execute([$userId]);
+				$unreadCount = (int)$stmt->fetchColumn();
+			} catch (Throwable $e) {
+				// Leave $listMessages as [] — table or column may not exist yet
+				$flashError = $flashError ?? 'Could not load messages. Please run pending database migrations.';
+			}
 		}
 
 		// ── Right panel data ─────────────────────────────────────────────
