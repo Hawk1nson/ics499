@@ -29,6 +29,7 @@ $roleLabels = [
 	<link rel="stylesheet" href="assets/icons/css/all.min.css" />
 	<link rel="stylesheet" href="assets/css/adminlte.min.css" />
 	<link rel="stylesheet" href="assets/css/theme.css" />
+	<link rel="stylesheet" href="assets/css/tom-select.min.css" />
 	<style>
 		/* ── Two-panel shell ──────────────────────────────────────────── */
 		.msg-shell {
@@ -113,79 +114,22 @@ $roleLabels = [
 		/* ── Compose / View card ──────────────────────────────────────── */
 		.msg-panel-body { padding: 1.5rem; }
 
-		/* ── Chip recipient input ─────────────────────────────────────── */
-		.chip-wrap {
-			border: 1px solid #ced4da;
-			border-radius: .25rem;
-			padding: 5px 8px;
-			min-height: 44px;
-			display: flex;
-			flex-wrap: wrap;
-			gap: 5px;
-			cursor: text;
-			background: #fff;
-			transition: border-color .15s, box-shadow .15s;
-		}
-		.chip-wrap:focus-within {
-			border-color: #80bdff;
-			box-shadow: 0 0 0 .2rem rgba(0,123,255,.25);
-		}
-		.chip-item {
-			display: inline-flex;
-			align-items: center;
-			background: var(--brand-primary, #0f8fa9);
-			color: #fff;
-			border-radius: 3px;
-			padding: 3px 8px 3px 10px;
-			font-size: .82rem;
-			line-height: 1.4;
-		}
-		.chip-remove {
-			margin-left: 7px;
-			cursor: pointer;
-			font-size: 1.1rem;
-			line-height: 1;
-			opacity: .75;
-			background: none;
-			border: none;
-			color: #fff;
-			padding: 0;
-		}
-		.chip-remove:hover { opacity: 1; }
-		.chip-search {
-			border: none;
-			outline: none;
-			flex: 1;
-			min-width: 140px;
-			font-size: .875rem;
-			background: transparent;
-			padding: 2px 4px;
-			min-height: 32px;
-		}
-		.chip-dropdown-wrap { position: relative; }
-		.chip-dropdown {
-			position: absolute;
-			z-index: 1055;
-			background: #fff;
-			border: 1px solid #dee2e6;
-			border-radius: .25rem;
-			box-shadow: 0 4px 16px rgba(0,0,0,.12);
-			max-height: 260px;
-			overflow-y: auto;
-			width: 100%;
-			top: 2px;
-		}
-		.chip-option {
-			padding: 11px 14px;
-			cursor: pointer;
-			font-size: .875rem;
+		/* ── Tom Select overrides ─────────────────────────────────────── */
+		.ts-control { min-height: 44px !important; cursor: text !important; }
+		.ts-dropdown { z-index: 1055 !important; }
+		.ts-custom-option {
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
-			min-height: 46px;
+			width: 100%;
 		}
-		.chip-option:hover, .chip-option.chip-highlighted { background: rgba(15,143,169,.08); }
-		.chip-option-role { font-size: .75rem; color: #6c757d; }
+		.ts-opt-name { font-size: .875rem; }
+		.ts-opt-role { font-size: .72rem; flex-shrink: 0; margin-left: 8px; }
+		.ts-dropdown .option { min-height: 46px; display: flex; align-items: center; padding: 8px 12px; }
+		.ts-dropdown .option:hover,
+		.ts-dropdown .option.active { background: rgba(15,143,169,.1) !important; }
+		.ts-wrapper .item { background: var(--brand-primary, #0f8fa9) !important; color: #fff !important; border-color: var(--brand-primary, #0f8fa9) !important; border-radius: 3px !important; }
+		.ts-wrapper .item .remove { border-left-color: rgba(255,255,255,.4) !important; color: #fff !important; }
 
 		/* ── Compose textarea ─────────────────────────────────────────── */
 		#msgBody { min-height: 180px; }
@@ -197,9 +141,12 @@ $roleLabels = [
 			.msg-content-panel { min-height: 50vh; }
 		}
 
-		body.dark-mode .chip-wrap { background: #2d3748; border-color: #4a5568; }
-		body.dark-mode .chip-dropdown { background: #2d3748; border-color: #4a5568; }
-		body.dark-mode .chip-option:hover, body.dark-mode .chip-option.chip-highlighted { background: rgba(15,143,169,.15); }
+		/* ── Dark mode: Tom Select ────────────────────────────────────── */
+		body.dark-mode .ts-control,
+		body.dark-mode .ts-dropdown { background: #2d3748 !important; border-color: #4a5568 !important; color: #f8f9fa !important; }
+		body.dark-mode .ts-dropdown .option { color: #f8f9fa; }
+		body.dark-mode .ts-dropdown .option:hover,
+		body.dark-mode .ts-dropdown .option.active { background: rgba(15,143,169,.25) !important; }
 	</style>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed<?= ($_SESSION['font_size'] ?? 'normal') === 'large' ? ' font-size-large' : '' ?>"
@@ -425,20 +372,12 @@ $roleLabels = [
 			<form id="composeForm" method="post" action="messages.php?action=compose">
 				<input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>" />
 
-				<!-- Recipient chip input -->
+				<!-- Tom Select recipient input -->
 				<div class="form-group">
-					<label>To <span class="text-danger">*</span></label>
-					<div class="chip-dropdown-wrap">
-						<div class="chip-wrap" id="chipWrap" tabindex="-1">
-							<!-- chips injected here by JS -->
-							<input type="text" id="chipSearch" class="chip-search"
-							       placeholder="Type a name…"
-							       autocomplete="off" />
-						</div>
-						<div class="chip-dropdown d-none" id="chipDropdown"></div>
-					</div>
-					<!-- hidden inputs submitted with form -->
-					<div id="chipHiddenInputs"></div>
+					<label for="recipientSelect">To <span class="text-danger">*</span></label>
+					<select id="recipientSelect" name="recipient_user_ids[]" multiple
+					        placeholder="Type a name or role…"
+					        data-preselected="<?= htmlspecialchars(json_encode(array_map('intval', $preselectedIds))) ?>"></select>
 				</div>
 
 				<div class="form-group">
@@ -493,150 +432,51 @@ $roleLabels = [
 <script src="assets/js/bootstrap.bundle.min.js"></script>
 <script src="assets/js/adminlte.min.js"></script>
 <script src="assets/js/theme-toggle.js"></script>
+<script src="assets/js/tom-select.min.js"></script>
 <script>
 (function () {
 'use strict';
 
-// ── Recipient data for chip input ─────────────────────────────────────
-var ALL_USERS = <?= json_encode(array_map(function ($r) use ($roleLabels) {
+// ── User data for Tom Select (always available on full page) ──────────
+var ALL_USERS_TS = <?= json_encode(array_map(function ($r) use ($roleLabels) {
 	return [
-		'id'   => (int)$r['user_id'],
+		'id'   => (string)(int)$r['user_id'],
 		'name' => $r['first_name'] . ' ' . $r['last_name'],
 		'role' => $roleLabels[$r['role']] ?? $r['role'],
 	];
 }, $recipients ?? []), JSON_HEX_TAG | JSON_HEX_AMP) ?>;
 
-var PRESELECTED = <?= json_encode(array_map('intval', $preselectedIds ?? [])) ?>;
+// ── Tom Select init (works for initial load and AJAX-injected compose) ─
+function initTomSelect(context) {
+	var sel = (context || document).querySelector('#recipientSelect');
+	if (!sel || sel.tomselect) return;
 
-// ── Chip input widget ─────────────────────────────────────────────────
-var chipWrap    = document.getElementById('chipWrap');
-var chipSearch  = document.getElementById('chipSearch');
-var chipDrop    = document.getElementById('chipDropdown');
-var hiddenWrap  = document.getElementById('chipHiddenInputs');
+	var preselected = [];
+	try { preselected = JSON.parse(sel.dataset.preselected || '[]').map(String); } catch (e) {}
 
-if (chipWrap) {
-	var selected = {};   // id → name map
-	var hlIndex  = -1;
-
-	function buildHidden() {
-		if (!hiddenWrap) return;
-		hiddenWrap.innerHTML = '';
-		Object.keys(selected).forEach(function (id) {
-			var inp = document.createElement('input');
-			inp.type = 'hidden';
-			inp.name = 'recipient_user_ids[]';
-			inp.value = id;
-			hiddenWrap.appendChild(inp);
-		});
-	}
-
-	function renderChips() {
-		// Remove existing chips (keep the search input)
-		chipWrap.querySelectorAll('.chip-item').forEach(function (c) { c.remove(); });
-		Object.keys(selected).forEach(function (id) {
-			var chip = document.createElement('span');
-			chip.className = 'chip-item';
-			chip.innerHTML =
-				'<span>' + escHtml(selected[id]) + '</span>' +
-				'<button type="button" class="chip-remove" aria-label="Remove" data-id="' + id + '">&times;</button>';
-			chipWrap.insertBefore(chip, chipSearch);
-		});
-		buildHidden();
-	}
-
-	function addChip(id, name) {
-		selected[id] = name;
-		renderChips();
-		chipSearch.value = '';
-		closeDrop();
-		chipSearch.focus();
-	}
-
-	function removeChip(id) {
-		delete selected[id];
-		renderChips();
-	}
-
-	function escHtml(s) {
-		return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-	}
-
-	function openDrop(query) {
-		if (!chipDrop) return;
-		var q = query.toLowerCase().trim();
-		var opts = ALL_USERS.filter(function (u) {
-			return !(u.id in selected) && (
-				u.name.toLowerCase().indexOf(q) !== -1 ||
-				u.role.toLowerCase().indexOf(q) !== -1
-			);
-		}).slice(0, 10);
-
-		if (!opts.length) { closeDrop(); return; }
-
-		chipDrop.innerHTML = opts.map(function (u, i) {
-			return '<div class="chip-option" data-id="' + u.id + '" data-name="' + escHtml(u.name) + '" data-idx="' + i + '">' +
-				'<span>' + escHtml(u.name) + '</span>' +
-				'<span class="chip-option-role">' + escHtml(u.role) + '</span>' +
-			'</div>';
-		}).join('');
-		chipDrop.classList.remove('d-none');
-		hlIndex = -1;
-	}
-
-	function closeDrop() {
-		if (chipDrop) chipDrop.classList.add('d-none');
-		hlIndex = -1;
-	}
-
-	function highlight(dir) {
-		var opts = chipDrop.querySelectorAll('.chip-option');
-		if (!opts.length) return;
-		opts.forEach(function (o) { o.classList.remove('chip-highlighted'); });
-		hlIndex = (hlIndex + dir + opts.length) % opts.length;
-		opts[hlIndex].classList.add('chip-highlighted');
-		opts[hlIndex].scrollIntoView({ block: 'nearest' });
-	}
-
-	chipSearch.addEventListener('input', function () {
-		if (this.value.trim()) openDrop(this.value);
-		else closeDrop();
-	});
-
-	chipSearch.addEventListener('keydown', function (e) {
-		if (e.key === 'ArrowDown')  { e.preventDefault(); highlight(1); return; }
-		if (e.key === 'ArrowUp')    { e.preventDefault(); highlight(-1); return; }
-		if ((e.key === 'Enter' || e.key === 'Tab') && hlIndex >= 0) {
-			e.preventDefault();
-			var opt = chipDrop.querySelector('.chip-highlighted');
-			if (opt) addChip(opt.dataset.id, opt.dataset.name);
-			return;
+	new TomSelect(sel, {
+		plugins: ['remove_button'],
+		maxItems: 20,
+		options: ALL_USERS_TS,
+		items: preselected,
+		valueField: 'id',
+		labelField: 'name',
+		searchField: ['name', 'role'],
+		placeholder: 'Type a name or role…',
+		render: {
+			option: function (data, escape) {
+				return '<div class="ts-custom-option">' +
+					'<span class="ts-opt-name">' + escape(data.name) + '</span>' +
+					'<span class="badge badge-secondary ts-opt-role">' + escape(data.role) + '</span>' +
+				'</div>';
+			},
+			item: function (data, escape) {
+				return '<div title="' + escape(data.role) + '">' + escape(data.name) + '</div>';
+			},
+			no_results: function (data, escape) {
+				return '<div style="padding:10px 14px;color:#6c757d">No users found for &ldquo;' + escape(data.input) + '&rdquo;</div>';
+			}
 		}
-		if (e.key === 'Backspace' && this.value === '') {
-			var ids = Object.keys(selected);
-			if (ids.length) removeChip(ids[ids.length - 1]);
-		}
-		if (e.key === 'Escape') closeDrop();
-	});
-
-	chipDrop.addEventListener('mousedown', function (e) {
-		var opt = e.target.closest('.chip-option');
-		if (opt) { e.preventDefault(); addChip(opt.dataset.id, opt.dataset.name); }
-	});
-
-	chipWrap.addEventListener('click', function (e) {
-		var rm = e.target.closest('.chip-remove');
-		if (rm) { removeChip(rm.dataset.id); return; }
-		chipSearch.focus();
-	});
-
-	document.addEventListener('click', function (e) {
-		if (!chipWrap.contains(e.target)) closeDrop();
-	});
-
-	// Pre-populate chips (reply / reply-all / POST repopulate)
-	PRESELECTED.forEach(function (id) {
-		var u = ALL_USERS.find(function (x) { return x.id === id; });
-		if (u) addChip(String(u.id), u.name);
 	});
 }
 
@@ -669,8 +509,8 @@ function initPanelScripts() {
 		});
 	});
 
-	// Re-init chip widget if compose was loaded
-	initChipWidget();
+	// Init Tom Select if compose was loaded
+	initTomSelect(contentPanel);
 
 	// AJAX compose form submit
 	var form = contentPanel.querySelector('#composeForm');
@@ -730,103 +570,6 @@ function showFormError(msg) {
 	el.classList.remove('d-none');
 }
 
-function initChipWidget() {
-	// Re-run chip init for dynamically loaded compose form
-	var cw = contentPanel.querySelector('#chipWrap');
-	var cs = contentPanel.querySelector('#chipSearch');
-	var cd = contentPanel.querySelector('#chipDropdown');
-	var hw = contentPanel.querySelector('#chipHiddenInputs');
-	if (!cw || !cs) return;
-
-	var sel2 = {};
-	var hlIdx2 = -1;
-
-	function bh2() {
-		hw.innerHTML = '';
-		Object.keys(sel2).forEach(function (id) {
-			var inp = document.createElement('input');
-			inp.type = 'hidden'; inp.name = 'recipient_user_ids[]'; inp.value = id;
-			hw.appendChild(inp);
-		});
-	}
-	function rc2() {
-		cw.querySelectorAll('.chip-item').forEach(function (c) { c.remove(); });
-		Object.keys(sel2).forEach(function (id) {
-			var chip = document.createElement('span');
-			chip.className = 'chip-item';
-			chip.innerHTML = '<span>' + esc2(sel2[id]) + '</span><button type="button" class="chip-remove" data-id="' + id + '">&times;</button>';
-			cw.insertBefore(chip, cs);
-		});
-		bh2();
-	}
-	function addC2(id, name) { sel2[id] = name; rc2(); cs.value = ''; clo2(); cs.focus(); }
-	function remC2(id) { delete sel2[id]; rc2(); }
-	function esc2(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-	function opn2(q) {
-		q = q.toLowerCase().trim();
-		var opts = ALL_USERS.filter(function (u) {
-			return !(u.id in sel2) && (u.name.toLowerCase().indexOf(q) !== -1 || u.role.toLowerCase().indexOf(q) !== -1);
-		}).slice(0,10);
-		if (!opts.length) { clo2(); return; }
-		cd.innerHTML = opts.map(function (u, i) {
-			return '<div class="chip-option" data-id="' + u.id + '" data-name="' + esc2(u.name) + '" data-idx="' + i + '">' +
-				'<span>' + esc2(u.name) + '</span><span class="chip-option-role">' + esc2(u.role) + '</span></div>';
-		}).join('');
-		cd.classList.remove('d-none');
-		hlIdx2 = -1;
-	}
-	function clo2() { cd.classList.add('d-none'); hlIdx2 = -1; }
-	function hl2(dir) {
-		var opts = cd.querySelectorAll('.chip-option');
-		if (!opts.length) return;
-		opts.forEach(function (o) { o.classList.remove('chip-highlighted'); });
-		hlIdx2 = (hlIdx2 + dir + opts.length) % opts.length;
-		opts[hlIdx2].classList.add('chip-highlighted');
-		opts[hlIdx2].scrollIntoView({ block:'nearest' });
-	}
-
-	cs.addEventListener('input', function () { this.value.trim() ? opn2(this.value) : clo2(); });
-	cs.addEventListener('keydown', function (e) {
-		if (e.key === 'ArrowDown')  { e.preventDefault(); hl2(1); return; }
-		if (e.key === 'ArrowUp')    { e.preventDefault(); hl2(-1); return; }
-		if ((e.key === 'Enter' || e.key === 'Tab') && hlIdx2 >= 0) {
-			e.preventDefault();
-			var opt = cd.querySelector('.chip-highlighted');
-			if (opt) addC2(opt.dataset.id, opt.dataset.name);
-			return;
-		}
-		if (e.key === 'Backspace' && this.value === '') {
-			var ids = Object.keys(sel2); if (ids.length) remC2(ids[ids.length-1]);
-		}
-		if (e.key === 'Escape') clo2();
-	});
-	cd.addEventListener('mousedown', function (e) {
-		var opt = e.target.closest('.chip-option');
-		if (opt) { e.preventDefault(); addC2(opt.dataset.id, opt.dataset.name); }
-	});
-	cw.addEventListener('click', function (e) {
-		var rm = e.target.closest('.chip-remove');
-		if (rm) { remC2(rm.dataset.id); return; }
-		cs.focus();
-	});
-	document.addEventListener('click', function (e) { if (!cw.contains(e.target)) clo2(); });
-
-	// Pre-select from URL params (reply/reply-all)
-	var urlParams = new URLSearchParams(window.location.search);
-	var replyTo = urlParams.get('reply_to');
-	var replyThread = urlParams.get('reply_all_thread');
-	if (replyTo) {
-		var u = ALL_USERS.find(function (x) { return String(x.id) === replyTo; });
-		if (u) addC2(String(u.id), u.name);
-	}
-	// Note: reply_all_thread pre-selection is handled server-side via PRESELECTED
-	PRESELECTED.forEach(function (id) {
-		var u = ALL_USERS.find(function (x) { return x.id === id; });
-		if (u && !(u.id in sel2)) addC2(String(u.id), u.name);
-	});
-}
-
 function updateListActiveRow(msgId) {
 	document.querySelectorAll('.msg-row').forEach(function (r) {
 		r.classList.toggle('msg-active', String(r.dataset.msgId) === String(msgId));
@@ -870,8 +613,9 @@ if (composeBtn) {
 	});
 }
 
-// ── Init panel scripts on first load ─────────────────────────────────
+// ── Init panel scripts and Tom Select on first load ──────────────────
 initPanelScripts();
+initTomSelect(null);
 
 // ── Browser back/forward ─────────────────────────────────────────────
 window.addEventListener('popstate', function (e) {

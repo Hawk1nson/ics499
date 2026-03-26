@@ -95,11 +95,20 @@ class MessagingController
 			}
 		}
 
+		// ── Recipients list (always fetched — Tom Select needs it on every page) ──
+		$stmt = $pdo->prepare(
+			'SELECT user_id, first_name, last_name, role
+			   FROM users
+			  WHERE is_active = 1 AND user_id != ?
+			  ORDER BY last_name, first_name'
+		);
+		$stmt->execute([$userId]);
+		$recipients = $stmt->fetchAll();
+
 		// ── Right panel data ─────────────────────────────────────────────
 		$rightView        = 'welcome';
 		$message          = null;
 		$threadRecipients = [];
-		$recipients       = [];
 		$preselectedIds   = [];
 		$prefillSubject   = '';
 
@@ -141,15 +150,6 @@ class MessagingController
 			}
 
 		} elseif ($action === 'compose') {
-			$stmt = $pdo->prepare(
-				'SELECT user_id, first_name, last_name, role
-				   FROM users
-				  WHERE is_active = 1 AND user_id != ?
-				  ORDER BY last_name, first_name'
-			);
-			$stmt->execute([$userId]);
-			$recipients = $stmt->fetchAll();
-
 			if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				$preselectedIds = array_map('intval', $_POST['recipient_user_ids'] ?? []);
 			} elseif (isset($_GET['reply_all_thread'])) {
