@@ -286,6 +286,9 @@ d3s3/
 - Intentionally excluded: `case_sheet_audit_log`, `permission_change_log`, and `patient_record_access_log` — these are append-only audit logs whose integrity depends on rows never being modified after insert
 - `appointments` already had a `notes` column prior to this migration
 
+### Profile — Phone Number Field *(2026-03-27)*
+- Optional Indian phone number field (`phone_e164`) added to all user profiles; accepts 10 digits (first digit 6–9), with optional `+91`/`91`/`0` prefix
+
 ### UX & Completeness Fixes *(2026-03-26)*
 - **Admin panel tiles**: Patient Management tile now links to `patients.php`; Messages tile now links to `messages.php`; the dead Help tile (no page exists) has been removed
 - **case-sheet.php — Save & Exit**: removed the fake `setTimeout` stub; since all fields are auto-saved on change via `update_case_sheet.php`, the button now redirects immediately

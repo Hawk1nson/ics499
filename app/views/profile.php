@@ -145,6 +145,22 @@
 							</div>
 
 							<div class="form-group">
+								<label for="phone_e164" class="small font-weight-bold text-muted">Phone Number</label>
+								<div class="input-group">
+									<div class="input-group-prepend">
+										<span class="input-group-text"><i class="fas fa-phone mr-1"></i>+91</span>
+									</div>
+									<input type="tel" name="phone_e164" id="phone_e164"
+										   class="form-control"
+										   value="<?= htmlspecialchars($profile['phone_e164'] ?? '') ?>"
+										   placeholder="98765 43210"
+										   maxlength="15"
+										   autocomplete="off" />
+								</div>
+								<small class="text-muted">Optional. 10-digit Indian mobile or landline number.</small>
+							</div>
+
+							<div class="form-group">
 								<label for="username" class="small font-weight-bold text-muted">Username</label>
 								<div class="input-group">
 									<div class="input-group-prepend">

@@ -64,7 +64,7 @@ class UserController
         }
 
         $stmt = $pdo->prepare(
-            'SELECT user_id, first_name, last_name, email, username, role, is_active, last_login_at
+            'SELECT user_id, first_name, last_name, email, phone_e164, username, role, is_active, last_login_at
              FROM users WHERE user_id = ? LIMIT 1'
         );
         $stmt->execute([$_SESSION['user_id']]);
@@ -250,15 +250,22 @@ class UserController
             return 'Invalid user.';
         }
 
-        $firstName  = trim($_POST['first_name'] ?? '');
-        $lastName   = trim($_POST['last_name'] ?? '');
-        $email      = trim($_POST['email'] ?? '');
-        $username   = trim($_POST['username'] ?? '');
+        $firstName   = trim($_POST['first_name'] ?? '');
+        $lastName    = trim($_POST['last_name'] ?? '');
+        $email       = trim($_POST['email'] ?? '');
+        $phone       = trim($_POST['phone_e164'] ?? '');
+        $username    = trim($_POST['username'] ?? '');
         $newPassword = $_POST['new_password'] ?? '';
         $confirmPwd  = $_POST['confirm_password'] ?? '';
 
         if ($firstName === '' || $lastName === '' || $email === '' || $username === '') {
             return 'All fields are required.';
+        }
+
+        // Accept: +91XXXXXXXXXX, 91XXXXXXXXXX, 0XXXXXXXXXX, or bare 10-digit number.
+        // First digit of the 10-digit subscriber number must be 6–9 (Indian mobile/landline range).
+        if ($phone !== '' && !preg_match('/^(\+91|91|0)?[6-9]\d{9}$/', preg_replace('/[\s\-]/', '', $phone))) {
+            return 'Please enter a valid Indian phone number (10 digits, starting with 6–9).';
         }
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -284,8 +291,8 @@ class UserController
             return 'This username is already taken.';
         }
 
-        $sets = ['first_name = ?', 'last_name = ?', 'email = ?', 'username = ?'];
-        $params = [$firstName, $lastName, $email, $username];
+        $sets = ['first_name = ?', 'last_name = ?', 'email = ?', 'phone_e164 = ?', 'username = ?'];
+        $params = [$firstName, $lastName, $email, $phone !== '' ? $phone : null, $username];
 
         if ($newPassword !== '') {
             if (strlen($newPassword) < 8) {
