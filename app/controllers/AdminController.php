@@ -764,6 +764,17 @@ class AdminController
             return 'Only CSV files are accepted.';
         }
 
+        // Verify actual file content (not just the client-supplied filename)
+        if (function_exists('finfo_open')) {
+            $finfo    = finfo_open(FILEINFO_MIME_TYPE);
+            $mimeType = finfo_file($finfo, $file['tmp_name']);
+            finfo_close($finfo);
+            $allowed = ['text/csv', 'text/plain', 'application/csv', 'application/vnd.ms-excel'];
+            if (!in_array($mimeType, $allowed, true)) {
+                return 'File content does not appear to be a valid CSV.';
+            }
+        }
+
         // ── Parse CSV ───────────────────────────────────────────
         $handle = fopen($file['tmp_name'], 'r');
         if ($handle === false) {

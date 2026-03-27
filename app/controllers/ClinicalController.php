@@ -880,6 +880,9 @@ class ClinicalController
 			if ($testName === '') {
 				continue;
 			}
+			if (strlen($testName) > 255) {
+				continue;
+			}
 			$insert->execute([$caseSheetId, $patientId, $testName, $notes !== '' ? $notes : null, $userId]);
 			$inserted[] = ['order_id' => (int)$pdo->lastInsertId(), 'test_name' => $testName];
 		}

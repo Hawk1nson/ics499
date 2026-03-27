@@ -158,9 +158,10 @@ class PatientController
 		$params     = [];
 
 		if ($name !== '') {
-			$like         = '%' . $name . '%';
-			$conditions[] = "(p.first_name LIKE ? OR p.last_name LIKE ?"
-			              . " OR CONCAT(p.first_name, ' ', IFNULL(p.last_name, '')) LIKE ?)";
+			$escaped      = str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], $name);
+			$like         = '%' . $escaped . '%';
+			$conditions[] = "(p.first_name LIKE ? ESCAPE '\\\\' OR p.last_name LIKE ? ESCAPE '\\\\'"
+			              . " OR CONCAT(p.first_name, ' ', IFNULL(p.last_name, '')) LIKE ? ESCAPE '\\\\')";
 			array_push($params, $like, $like, $like);
 		}
 
