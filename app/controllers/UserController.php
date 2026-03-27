@@ -27,6 +27,11 @@ class UserController
             unset($_SESSION['create_account_success']);
         }
 
+        // Show a message when redirected here by the session timeout guard
+        if (isset($_GET['reason']) && $_GET['reason'] === 'timeout') {
+            $loginError = 'Your session has expired due to inactivity. Please log in again.';
+        }
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $loginError = $this->processLogin();
             // If we reach here the login failed; fall through to render the form.

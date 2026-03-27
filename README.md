@@ -275,6 +275,11 @@ d3s3/
 - Default view is **list** (`listMonth`); month-grid view accessible via toolbar toggle
 - Appointment overlay events (clinical roles only) include the patient name and doctor name, coloured purple to distinguish from scheduled events
 
+### Session Timeout *(2026-03-27)*
+- Idle session timeout enforced in `app/middleware/auth.php` — inactive sessions are destroyed and the user is redirected to the login page with an explanatory message
+- Timeout duration defined as a single constant (`SESSION_TIMEOUT`) in `app/config/session.php` — one value to change before go-live
+- Currently set to **6 hours** (testing; no real patient data). Change to `900` (15 minutes) for HIPAA-compliant production deployment
+
 ### Universal Notes Column *(2026-03-27)*
 - Migration 024 adds a `notes TEXT DEFAULT NULL` column to every operational table (`users`, `user_preferences`, `patients`, `case_sheets`, `events`, `patient_feedback`, `assets`, `feedback`, `messages`, `tasks`, `lab_orders`, `role_permissions`, `patient_daily_sequence`)
 - Provides a catch-all field for stakeholders to record information not covered by the existing schema
