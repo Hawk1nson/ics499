@@ -12,6 +12,7 @@ $_isClinicalRole = can($_userRole, 'case_sheets', 'W');
 $todayStats      = ['total_today' => 0, 'in_progress' => 0, 'ready' => 0, 'in_review' => 0, 'closed_today' => 0];
 $myActiveReviews = [];
 $calendarEvents  = [];
+$calendarAppts   = [];
 $nextEvent       = null;
 $staleSheets     = [];
 
@@ -94,42 +95,6 @@ if ($_isClinicalRole) { try {
 		$myActiveReviews = $stmt->fetchAll();
 	}
 
-	// Calendar events
-	$calendarEvents = $pdo->query(
-		'SELECT title, event_type, start_datetime, end_datetime
-		   FROM events WHERE is_active = 1 ORDER BY start_datetime'
-	)->fetchAll();
-
-	// Appointment events for calendar
-	$calendarAppts = [];
-	if (can($_userRole, 'appointments')) {
-		$_calApptSql = "SELECT a.appointment_id, a.scheduled_date, a.scheduled_time,
-		                       p.first_name, p.last_name,
-		                       d.last_name AS doc_last
-		                  FROM appointments a
-		                  JOIN case_sheets cs ON cs.case_sheet_id = a.case_sheet_id
-		                  JOIN patients    p  ON p.patient_id     = cs.patient_id
-		                  JOIN users       d  ON d.user_id        = a.doctor_user_id
-		                 WHERE a.scheduled_date >= CURDATE()
-		                   AND a.status NOT IN ('CANCELLED','NO_SHOW','COMPLETED')";
-		$_calApptParams = [];
-		if ($_userRole === 'DOCTOR') {
-			$_calApptSql .= ' AND a.doctor_user_id = ?';
-			$_calApptParams[] = (int)$_SESSION['user_id'];
-		}
-		$_calApptSql .= ' ORDER BY a.scheduled_date, a.scheduled_time';
-		$_calStmt = $pdo->prepare($_calApptSql);
-		$_calStmt->execute($_calApptParams);
-		$calendarAppts = $_calStmt->fetchAll(PDO::FETCH_ASSOC);
-	}
-
-	// Next upcoming event
-	$nextEvent = $pdo->query(
-		"SELECT title, start_datetime, event_type, location_name
-		   FROM events WHERE is_active = 1 AND start_datetime >= NOW()
-		   ORDER BY start_datetime LIMIT 1"
-	)->fetch(PDO::FETCH_ASSOC);
-
 	// ── Stat tile patient lists (click-to-view popup) ─────────────────────
 	$statPatients = [];
 	foreach ([
@@ -186,6 +151,46 @@ if ($_isClinicalRole) { try {
 } catch (PDOException $e) {
 	// DB error - leave all clinical stats at their zero defaults
 } }
+
+// ── Calendar events (all roles with events access) ───────────────────────────
+if (can($_userRole, 'events')) {
+	try {
+		$calendarEvents = $pdo->query(
+			'SELECT title, event_type, start_datetime, end_datetime
+			   FROM events WHERE is_active = 1 ORDER BY start_datetime'
+		)->fetchAll();
+
+		$nextEvent = $pdo->query(
+			"SELECT title, start_datetime, event_type, location_name
+			   FROM events WHERE is_active = 1 AND start_datetime >= NOW()
+			   ORDER BY start_datetime LIMIT 1"
+		)->fetch(PDO::FETCH_ASSOC);
+	} catch (PDOException $e) {}
+}
+
+// Appointment events for calendar (clinical roles with appointments access)
+if ($_isClinicalRole && can($_userRole, 'appointments')) {
+	try {
+		$_calApptSql = "SELECT a.appointment_id, a.scheduled_date, a.scheduled_time,
+		                       p.first_name, p.last_name,
+		                       d.last_name AS doc_last
+		                  FROM appointments a
+		                  JOIN case_sheets cs ON cs.case_sheet_id = a.case_sheet_id
+		                  JOIN patients    p  ON p.patient_id     = cs.patient_id
+		                  JOIN users       d  ON d.user_id        = a.doctor_user_id
+		                 WHERE a.scheduled_date >= CURDATE()
+		                   AND a.status NOT IN ('CANCELLED','NO_SHOW','COMPLETED')";
+		$_calApptParams = [];
+		if ($_userRole === 'DOCTOR') {
+			$_calApptSql .= ' AND a.doctor_user_id = ?';
+			$_calApptParams[] = (int)$_SESSION['user_id'];
+		}
+		$_calApptSql .= ' ORDER BY a.scheduled_date, a.scheduled_time';
+		$_calStmt = $pdo->prepare($_calApptSql);
+		$_calStmt->execute($_calApptParams);
+		$calendarAppts = $_calStmt->fetchAll(PDO::FETCH_ASSOC);
+	} catch (PDOException $e) {}
+}
 
 // ── Dashboard counts for new features ───────────────────────────────────────
 $unreadMessages = 0;
@@ -982,28 +987,13 @@ $roleLabel = [
 							<a href="calendar.php" class="btn btn-sm btn-outline-primary">Full calendar</a>
 						</div>
 						<div class="card-body p-2">
-							<div id="clinicalCalendarWidget"></div>
+							<div id="dashCalendarWidget"></div>
 						</div>
 					</div>
 				</div>
 
-				<!-- Right column: Alerts + Tasks (both coming soon) -->
+				<!-- Right column: Tasks -->
 				<div class="col-lg-6 mb-4">
-					<div class="card shadow-sm mb-3">
-						<div class="card-header border-0 d-flex align-items-center justify-content-between">
-							<h3 class="card-title mb-0">
-								<i class="fas fa-bell mr-2 text-danger"></i>Active Alerts
-							</h3>
-							<span class="badge badge-secondary">Coming Soon</span>
-						</div>
-						<div class="card-body p-0">
-							<div class="coming-soon-banner">
-								<i class="fas fa-bell-slash"></i>
-								<span>Clinical alerts coming soon</span>
-							</div>
-						</div>
-					</div>
-
 					<div class="card shadow-sm">
 						<div class="card-header border-0 d-flex align-items-center justify-content-between">
 							<h3 class="card-title mb-0">

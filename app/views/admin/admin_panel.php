@@ -93,7 +93,7 @@
 						</a>
 					</div>
 					<div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-4">
-						<a href="#" class="admin-tile">
+						<a href="patients.php" class="admin-tile">
 							<div class="admin-tile-icon">
 								<i class="fas fa-user-injured"></i>
 							</div>
@@ -101,7 +101,7 @@
 						</a>
 					</div>
 					<div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-4">
-						<a href="#" class="admin-tile">
+						<a href="messages.php" class="admin-tile">
 							<div class="admin-tile-icon">
 								<i class="fas fa-envelope"></i>
 							</div>
@@ -148,15 +148,7 @@
 							<div class="admin-tile-label">Permissions</div>
 						</a>
 					</div>
-					<div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-4">
-						<a href="#" class="admin-tile">
-							<div class="admin-tile-icon">
-								<i class="fas fa-question-circle"></i>
-							</div>
-							<div class="admin-tile-label">Help</div>
-						</a>
 					</div>
-				</div>
 			</div>
 		</section>
 	</div>

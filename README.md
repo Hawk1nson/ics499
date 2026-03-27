@@ -246,6 +246,35 @@ d3s3/
 - **Tablet-optimised**: 44 px tap targets, scale-on-tap feedback, `fixedWeekCount: false`, `dayMaxEvents: 3`, `nowIndicator: true`, simplified 3-view toolbar (Month / Week / List)
 - **Dashboard widget**: compact `listMonth` view with scoped brand-colour styling
 
+### Messaging — Tom Select Recipient Input *(2026-03-25)*
+- Replaced the custom chip-widget recipient input with the **Tom Select** library for a polished, accessible multi-recipient selector
+- Selected recipients render as removable chips with consistent styling; keyboard navigation and search work out of the box
+- Self-hosted (`assets/js/tom-select.complete.min.js`, `assets/css/tom-select.bootstrap4.min.css`) — no CDN dependency
+
+### Bug Fixes *(2026-03-25)*
+- Patient profile is now correctly reachable from the "My Active Reviews" queue on the doctor dashboard (broken link resolved)
+- `MessagingController` list queries wrapped in `try-catch` to prevent a fatal error when the messages table is missing or unreachable
+
+### Intake — Sticky Patient Header *(2026-03-26)*
+- Patient name and patient code are now pinned in the fixed top navbar while editing a case sheet, so the identity of the patient being worked on is always visible regardless of scroll position or which tab is active
+
+### Appointments — Improved New Appointment Flow *(2026-03-26)*
+- The case sheet picker is now hidden when a patient has zero or one open case sheet (the vast majority of cases) — it only appears when there is genuine ambiguity (two or more open sheets)
+- With one open sheet it is auto-selected silently; with zero open sheets the server automatically reuses the most recent open sheet or creates a new `INTAKE_IN_PROGRESS` stub — the user never has to make an unnecessary selection
+
+### Pre-Deployment Security & Bug Fixes *(2026-03-26)*
+- **CSV import MIME validation** (`AdminController`): file content is now verified with `finfo` in addition to the extension check, preventing a file named `malware.php.csv` from bypassing the filter
+- **LIKE wildcard escaping** (`PatientController`): `%` and `_` characters in patient search input are now escaped before being interpolated into LIKE patterns, so a literal `%` searches correctly instead of matching everything
+- **Lab test name length cap** (`ClinicalController`): test names longer than 255 characters are now silently skipped before the DB insert, preventing truncation errors on oversized AJAX payloads
+- **Backup directory** (`backups/.htaccess`): confirmed deny-all rule is in place, blocking direct web access to timestamped CSV exports
+
+### UX & Completeness Fixes *(2026-03-26)*
+- **Admin panel tiles**: Patient Management tile now links to `patients.php`; Messages tile now links to `messages.php`; the dead Help tile (no page exists) has been removed
+- **case-sheet.php — Save & Exit**: removed the fake `setTimeout` stub; since all fields are auto-saved on change via `update_case_sheet.php`, the button now redirects immediately
+- **case-sheet.php — Final Submit**: now POSTs to `intake.php?action=complete-intake`, setting the case sheet status to `INTAKE_COMPLETE` and moving it into the doctor queue; previously a non-functional stub
+- **Dashboard**: removed the "Clinical alerts coming soon" placeholder card from the right column for clinical users
+- **Sidebar brand link**: clicking the D3S3 CareSystem logo now navigates to `admin.php` (admin roles) or `dashboard.php` (all other roles) instead of `href="#"`
+
 ## License
 
 MIT — see [LICENSE](LICENSE) for details.

@@ -2,6 +2,10 @@
 require_once __DIR__ . '/app/config/session.php';
 require_once __DIR__ . '/app/config/permissions.php';
 
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 // Authentication guard
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
@@ -1266,6 +1270,7 @@ $pageTitle = "Case Sheet";
 $(document).ready(function() {
 	var isEditMode = false;
 	var caseSheetId = '<?php echo $case_sheet_id ?? ''; ?>';
+	var CSRF_TOKEN  = '<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES); ?>';
 	var patientId = $('#patient_id').val();
 	var caseSheetStatus = 'OPEN'; // Default to OPEN
 	
@@ -1872,31 +1877,37 @@ $(document).ready(function() {
 			return;
 		}
 		
-		// Show saving indicator
-		showAutoSaveIndicator('saving', 'Saving...');
-		
-		// TODO: Implement actual save functionality for case sheet
-		// For now, simulate save with timeout
+		// All fields are auto-saved on change via update_case_sheet.php.
+		// Nothing extra to flush — just navigate back to the dashboard.
+		showAutoSaveIndicator('saved', 'Saved');
 		setTimeout(function() {
-			showAutoSaveIndicator('saved', 'Saved successfully');
-			setTimeout(function() {
-				window.location.href = 'dashboard.php';
-			}, 500);
-		}, 1000);
+			window.location.href = 'dashboard.php';
+		}, 400);
 	});
 	
-	// Final Submit button
+	// Final Submit button — marks the case sheet INTAKE_COMPLETE and
+	// moves it into the doctor queue via the existing completeIntake endpoint.
 	$('#finalSubmit').on('click', function() {
-		// Show saving indicator
+		if (!caseSheetId) {
+			alert('No case sheet loaded.');
+			return;
+		}
 		showAutoSaveIndicator('saving', 'Submitting...');
-		
-		// TODO: Implement final submission
-		setTimeout(function() {
-			showAutoSaveIndicator('saved', 'Case sheet completed');
-			setTimeout(function() {
-				window.location.href = 'dashboard.php';
-			}, 1000);
-		}, 1000);
+		$.ajax({
+			url:         'intake.php?action=complete-intake',
+			method:      'POST',
+			contentType: 'application/x-www-form-urlencoded',
+			data:        $.param({ case_sheet_id: caseSheetId, csrf_token: CSRF_TOKEN }),
+			success: function() {
+				showAutoSaveIndicator('saved', 'Submitted');
+				setTimeout(function() {
+					window.location.href = 'dashboard.php';
+				}, 600);
+			},
+			error: function() {
+				showAutoSaveIndicator('error', 'Submission failed — please try again');
+			}
+		});
 	});
 	
 	// Auto-save indicator function

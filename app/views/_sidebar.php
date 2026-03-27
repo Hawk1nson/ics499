@@ -78,7 +78,7 @@ if ($_navCanMessages && !$isMessagesPage) {
 }
 ?>
 <aside class="main-sidebar sidebar-dark-primary elevation-3">
-	<a href="#" class="brand-link text-center">
+	<a href="<?= $_navCanUsers ? 'admin.php' : 'dashboard.php' ?>" class="brand-link text-center">
 		<span class="brand-text font-weight-light">D3S3 CareSystem</span>
 	</a>
 
