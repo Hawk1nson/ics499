@@ -273,3 +273,74 @@ cmp_no_prior_record,మునుపటి రికార్డు లేదు
 cmp_not_recorded,నమోదు చేయలేదు
 cmp_menstrual_heading,రుతుక్రమ పోలిక (మునుపటి సందర్శన)
 cmp_col_field,క్షేత్రం
+tab_patient,రోగి
+tab_history_records,చరిత్ర మరియు రోగి రికార్డులు
+tab_assessment,మూల్యాంకనం మరియు రోగ నిర్ధారణ
+tab_plan,చికిత్స ప్రణాళిక
+tab_followup,ఫాలో-అప్ మరియు రెఫరల్లు
+tab_audit,ఆడిట్ చరిత్ర
+doctor_review,డాక్టర్ సమీక్ష
+intake_by,ఇంటేక్ చేసినవారు
+this_visit,ఈ సందర్శన
+type_label,రకం
+symptoms_label,లక్షణాలు
+lock_editing,సవరణను లాక్ చేయండి
+editing_patient_record,రోగి రికార్డు సవరిస్తున్నారు.
+auto_save_audit_note,మార్పులు స్వయంచాలకంగా సేవ్ అవుతాయి మరియు ఆడిట్ లాగ్‌లో నమోదు చేయబడతాయి.
+synced_with_history,చరిత్ర ట్యాబ్‌తో సమకాలీకరించబడింది
+add_allergy,అలెర్జీ జోడించండి
+patient_history_heading,రోగి చరిత్ర
+prior_visits_subtitle,ఈ రోగి యొక్క అన్ని మునుపటి సందర్శనలు, కొత్తవి ముందు.
+no_previous_visits,ఈ రోగికి మునుపటి సందర్శనలు రికార్డులో లేవు.
+assessment_label,మూల్యాంకనం
+diagnosis_label,రోగ నిర్ధారణ
+treatment_plan_label,చికిత్స ప్రణాళిక
+prescriptions_label,మందుల వివరాలు
+follow_up_notes_label,ఫాలో-అప్ గమనికలు
+surgical_label,శస్త్రచికిత్స
+closure_discharged,డిశ్చార్జ్ చేయబడింది
+closure_referred,రెఫర్ చేయబడింది
+closure_cancelled,రద్దు చేయబడింది
+cmp_vitals_heading_short,వైటల్స్ పోలిక
+cmp_lab_heading,ల్యాబ్ ఫలితాల పోలిక
+cmp_previous_visit_label,మునుపటి సందర్శన:
+cmp_col_prev_visit,మునుపటి సందర్శన
+cmp_col_investigation,పరిశోధన
+cmp_menstrual_heading_short,రుతుక్రమ పోలిక
+has_uterus_label,గర్భాశయం ఉంది
+auto_saved_note,స్వయంచాలకంగా సేవ్ అయింది. ప్రతి మార్పు మీ పేరు మరియు సమయంతో నమోదు చేయబడుతుంది.
+left_breast,ఎడమ స్తనం
+right_breast,కుడి స్తనం
+pelvic_examination_label,పెల్విక్ పరీక్ష
+rectal_skin,మలద్వార చర్మం
+rectal_remarks,మలద్వార వ్యాఖ్యలు
+hypopharynx,హైపోఫారింక్స్
+clinical_assessment,క్లినికల్ మూల్యాంకనం
+follow_up_date_label,ఫాలో-అప్ తేదీ
+follow_up_instructions_label,ఫాలో-అప్ సూచనలు
+referrals_heading,రెఫరల్లు
+referral_to_label,రెఫరల్ వ్యక్తికి
+referral_reason_label,రెఫరల్ కారణం
+hpi_heading,ప్రస్తుత అనారోగ్య చరిత్ర
+hpi_narrative_label,HPI వివరణ
+disposition_label,తీర్మానం
+close_chart,చార్ట్ మూసివేయండి
+closure_type_label,మూసివేత రకం
+closure_follow_up_scheduled,ఫాలో-అప్ షెడ్యూల్ చేయబడింది
+view_audit_history,ఆడిట్ చరిత్ర చూడండి
+col_when,ఎప్పుడు
+col_by,ఎవరిచే
+col_previous_value,మునుపటి విలువ
+col_new_value,కొత్త విలువ
+audit_no_changes,ఇంకా మార్పులు నమోదు కాలేదు.
+audit_subtitle,ఈ చార్ట్‌లో చేసిన ప్రతి మార్పు యొక్క పూర్తి రికార్డు — ఎవరు మార్చారు, ఎప్పుడు మరియు మునుపటి విలువ ఏమిటి.
+assessment_diagnosis_subtitle,మీ క్లినికల్ మూల్యాంకనం మరియు అధికారిక రోగ నిర్ధారణ నమోదు చేయండి.
+treatment_plan_subtitle,ఈ రోగికి చికిత్స ప్రణాళిక, మందులు మరియు సలహాలు నమోదు చేయండి.
+followup_subtitle,ఏదైనా ఫాలో-అప్ అపాయింట్‌మెంట్లు, రెఫరల్లు మరియు తుది తీర్మానం పేర్కొనండి.
+close_chart_warning,ఈ చార్ట్ మూసివేయడం దాన్ని లాక్ చేస్తుంది. ఈ చర్యను రద్దు చేయడం సాధ్యం కాదు. కొనసాగే ముందు అన్ని పరీక్ష గమనికలు, మూల్యాంకనం, రోగ నిర్ధారణ మరియు చికిత్స ప్రణాళిక పూర్తయిందని నిర్ధారించుకోండి.
+saving_label,సేవ్ అవుతోంది...
+advice_instructions,సలహాలు మరియు సూచనలు
+closure_pending,పెండింగ్
+close_chart_locked_note,చార్ట్ లాక్ చేయబడి మూసివేయబడినట్లు గుర్తించబడుతుంది. నమోదు: మూసివేత
+close_chart_at_submission,సమర్పణ సమయంలో.
+end_label,ముగించు

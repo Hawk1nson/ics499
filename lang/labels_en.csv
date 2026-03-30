@@ -273,3 +273,74 @@ cmp_no_prior_record,no prior record
 cmp_not_recorded,not recorded
 cmp_menstrual_heading,Menstrual comparison (previous visit)
 cmp_col_field,Field
+tab_patient,Patient
+tab_history_records,History & Patient Records
+tab_assessment,Assessment & Diagnosis
+tab_plan,Treatment Plan
+tab_followup,Follow-up & Referrals
+tab_audit,Audit History
+doctor_review,Doctor Review
+intake_by,Intake by
+this_visit,This visit
+type_label,Type
+symptoms_label,Symptoms
+lock_editing,Lock Editing
+editing_patient_record,Editing patient record.
+auto_save_audit_note,Changes are saved automatically per field and logged in the audit trail.
+synced_with_history,synced with History tab
+add_allergy,Add allergy
+patient_history_heading,Patient History
+prior_visits_subtitle,"All prior closed visits for this patient, newest first."
+no_previous_visits,No previous visits on record for this patient.
+assessment_label,Assessment
+diagnosis_label,Diagnosis
+treatment_plan_label,Treatment Plan
+prescriptions_label,Prescriptions
+follow_up_notes_label,Follow-up Notes
+surgical_label,Surgical
+closure_discharged,Discharged
+closure_referred,Referred
+closure_cancelled,Cancelled
+cmp_vitals_heading_short,Vitals comparison
+cmp_lab_heading,Lab results comparison
+cmp_previous_visit_label,Previous visit:
+cmp_col_prev_visit,Previous visit
+cmp_col_investigation,Investigation
+cmp_menstrual_heading_short,Menstrual comparison
+has_uterus_label,Has Uterus
+auto_saved_note,Auto-saved. Every change is logged with your name and timestamp.
+left_breast,Left Breast
+right_breast,Right Breast
+pelvic_examination_label,Pelvic Examination
+rectal_skin,Rectal Skin
+rectal_remarks,Rectal Remarks
+hypopharynx,Hypopharynx
+clinical_assessment,Clinical Assessment
+follow_up_date_label,Follow-up Date
+follow_up_instructions_label,Follow-up Instructions
+referrals_heading,Referrals
+referral_to_label,Referral To
+referral_reason_label,Referral Reason
+hpi_heading,History of Present Illness
+hpi_narrative_label,HPI Narrative
+disposition_label,Disposition
+close_chart,Close Chart
+closure_type_label,Closure Type
+closure_follow_up_scheduled,Follow-up Scheduled
+view_audit_history,View Audit History
+col_when,When
+col_by,By
+col_previous_value,Previous Value
+col_new_value,New Value
+audit_no_changes,No changes recorded yet.
+audit_subtitle,Complete record of every change made to this chart — who changed it, when, and what the previous value was.
+assessment_diagnosis_subtitle,Record your clinical assessment and formal diagnosis.
+treatment_plan_subtitle,"Document the treatment plan, prescriptions, and advice for this patient."
+followup_subtitle,"Specify any follow-up appointments, referrals, and final disposition."
+close_chart_warning,Closing this chart will lock it. This action cannot be undone. Ensure all examination notes, assessment, diagnosis, and treatment plan are complete before proceeding.
+saving_label,Saving...
+advice_instructions,Advice & Instructions
+closure_pending,Pending
+close_chart_locked_note,Chart will be locked and marked as closed. Recorded: closed by
+close_chart_at_submission,at time of submission.
+end_label,End
