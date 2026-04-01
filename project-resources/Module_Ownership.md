@@ -4,7 +4,7 @@ The following modules will be implemented and maintained by the India Team.
 All UI/UX, styling, and CSS must remain consistent with the overall system design defined by Gary and Andrew.
 
 ### A. Calendar Management – Health Camps  
-**Owner:** Harshitha Sai  
+**Owner:** Harshitha Sai  (Andrew Hawkinson)
 
 **Responsibilities:**
 - Create, update, delete health camp events.
@@ -15,7 +15,7 @@ All UI/UX, styling, and CSS must remain consistent with the overall system desig
 ---
 
 ### B. Assets Management – Educational Videos  
-**Owner:** Hema Sri  
+**Owner:** Hema Sri  (Andrew Hawkinson)
 
 **Responsibilities:**
 - Upload and manage educational video assets.
@@ -27,7 +27,7 @@ All UI/UX, styling, and CSS must remain consistent with the overall system desig
 ---
 
 ### C. Reports & Analytics  
-**Owner:** Manvith  
+**Owner:** Manvith  (Gary Marks)
 
 **Responsibilities:**
 - Generate visual dashboards.
