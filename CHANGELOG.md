@@ -190,3 +190,18 @@
 
 ### Profile — Phone Number Field *(2026-03-27)*
 - Optional Indian phone number field (`phone_e164`) added to all user profiles; accepts 10 digits (first digit 6–9), with optional `+91`/`91`/`0` prefix
+
+### i18n — Intake Comparison Panels & Enum Labels *(2026-03-29)*
+- Vitals and menstrual comparison panels in `intake.php` fully localised — card headings, legend badges, column headers, row labels, and empty-state strings all replaced with `__()` calls
+- `$_mhEnumMap` (PHP) and `_intakeEnumDisplayMap` (JS) added so `REGULAR`/`IRREGULAR` MH enum values display in the active language both on page load and when changed live via dropdown
+- Patient selection card now uses `_sexDisplayMap` in JS to translate `MALE`/`FEMALE`/`OTHER` when a patient is chosen from search, and replaces the hardcoded "years" string with `__('years')`
+- 10 new keys added to `lang/labels_en.csv` and `lang/labels_te.csv`
+
+### i18n — Doctor Review Page Localisation *(2026-03-29)*
+- `app/views/review.php` fully localised — all user-visible strings replaced with `__()` calls across all 9 tabs (Patient, History, General, Examinations, Labs, Assessment, Treatment Plan, Follow-up, Audit)
+- Vitals comparison, lab comparison, and menstrual comparison panels in `review.php` use the same `vitalsCompare()` helper and `__()` labels as the intake view
+- 71 new keys added to `lang/labels_en.csv` and `lang/labels_te.csv`
+
+### Security Fixes *(2026-04-01)*
+- **Stored XSS — patient search dropdown** (`intake.php`): patient data fields (`first_name`, `last_name`, `patient_code`, `sex`, `age_years`, `phone_e164`) are now HTML-escaped via jQuery's `$('<span>').text(v).html()` before being inserted into the search results list; previously these were concatenated into a raw HTML string and injectable
+- **Flash message escaping** (`intake.php`): `$flashSuccess` now passes through `htmlspecialchars()` at the output point, consistent with all other flash/error messages in the codebase

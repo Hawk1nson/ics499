@@ -149,7 +149,7 @@ load_language($_SESSION['language'] ?? 'en');
 
 				<?php if ($flashSuccess): ?>
 				<div class="alert alert-success alert-dismissible fade show" role="alert">
-					<i class="fas fa-check-circle mr-2"></i><?= $flashSuccess ?>
+					<i class="fas fa-check-circle mr-2"></i><?= htmlspecialchars($flashSuccess) ?>
 					<button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
 				</div>
 				<?php endif; ?>
@@ -1587,7 +1587,8 @@ load_language($_SESSION['language'] ?? 'en');
 					$results.empty();
 					if (!data.success || !data.patients.length) { $results.append('<div class="list-group-item text-muted">No patients found</div>').show(); return; }
 					data.patients.forEach(function (p) {
-						var label = p.first_name + ' ' + (p.last_name || '') + ' (' + p.patient_code + ')' + (p.sex && p.sex !== 'UNKNOWN' ? ' &middot; ' + p.sex : '') + (p.age_years ? ' &middot; ' + p.age_years + 'y' : '') + (p.phone_e164 ? ' &middot; ' + p.phone_e164 : '');
+						function t(v) { return $('<span>').text(String(v || '')).html(); }
+						var label = t(p.first_name) + ' ' + t(p.last_name || '') + ' (' + t(p.patient_code) + ')' + (p.sex && p.sex !== 'UNKNOWN' ? ' &middot; ' + t(p.sex) : '') + (p.age_years ? ' &middot; ' + t(p.age_years) + 'y' : '') + (p.phone_e164 ? ' &middot; ' + t(p.phone_e164) : '');
 						$results.append('<a href="#" class="list-group-item list-group-item-action" data-patient=\'' + JSON.stringify(p).replace(/'/g, '&#39;') + '\'>' + label + '</a>');
 					});
 					$results.show();
