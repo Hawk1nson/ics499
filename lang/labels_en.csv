@@ -119,9 +119,9 @@ add_another_allergy,Add Another Allergy
 family_history,Family History
 fh_cancer,Cancer
 fh_tuberculosis,Tuberculosis
-fh_diabetes,Diabetes
-fh_bp,BP (Hypertension)
-fh_thyroid,Thyroid
+fh_diabetes,DM (Diabetes)
+fh_bp,HTN (Hypertension)
+fh_thyroid,TSH (Thyroid)
 other_family_history,Other Family History
 vital_signs,Vital Signs
 pulse,Pulse

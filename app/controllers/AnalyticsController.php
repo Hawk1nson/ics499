@@ -923,9 +923,9 @@ class AnalyticsController
         $familyHistory = array(
             'Cancer'         => (int)($fhRow['cancer']       ?? 0),
             'Tuberculosis'   => (int)($fhRow['tuberculosis'] ?? 0),
-            'Diabetes'       => (int)($fhRow['diabetes']     ?? 0),
-            'BP (Hypertension)' => (int)($fhRow['bp']        ?? 0),
-            'Thyroid'        => (int)($fhRow['thyroid']      ?? 0),
+            'DM (Diabetes)'      => (int)($fhRow['diabetes']     ?? 0),
+            'HTN (Hypertension)' => (int)($fhRow['bp']        ?? 0),
+            'TSH (Thyroid)'      => (int)($fhRow['thyroid']      ?? 0),
         );
 
         // Other family history — free text, top 15 entries (most recent case sheet per patient)

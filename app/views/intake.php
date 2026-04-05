@@ -647,7 +647,7 @@ load_language($_SESSION['language'] ?? 'en');
 													<label><?= __('condition_htn') ?></label>
 													<select class="form-control" name="condition_htn" data-field="condition_htn">
 														<option value="NO" <?= ($historyData['condition_htn'] ?? '') === 'NO' ? 'selected' : '' ?>><?= __('cond_no') ?></option>
-														<option value="CURRENT" <?= ($historyData['condition_htn'] ?? '') === 'CURRENT' ? 'selected' : '' ?>>Present</option>
+														<option value="CURRENT" <?= ($historyData['condition_htn'] ?? '') === 'CURRENT' ? 'selected' : '' ?>><?= __('cond_current') ?></option>
 														<option value="PAST" <?= ($historyData['condition_htn'] ?? '') === 'PAST' ? 'selected' : '' ?>><?= __('cond_past') ?></option>
 													</select>
 												</div>
