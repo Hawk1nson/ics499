@@ -61,6 +61,14 @@ if (!in_array($field, $allowedFields, true)) {
 	exit;
 }
 
+// Defence-in-depth: after whitelist check, assert $field is a safe SQL identifier.
+// PDO cannot parameterize column names; the whitelist above is the primary guard,
+// but this regex ensures interpolation is safe even if the whitelist is ever misedited.
+if (!preg_match('/^[a-z][a-z0-9_]*$/', $field)) {
+	echo json_encode(['success' => false, 'message' => 'Invalid field']);
+	exit;
+}
+
 try {
 	$stmt = $pdo->prepare("UPDATE patients SET `$field` = :value, updated_at = NOW() WHERE patient_id = :patient_id");
 	$stmt->execute([':value' => $value, ':patient_id' => $patientId]);

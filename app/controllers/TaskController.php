@@ -131,6 +131,9 @@ class TaskController
 		if (strlen($title) > 200) {
 			return 'Title may not exceed 200 characters.';
 		}
+		if (strlen($description) > 5000) {
+			return 'Description may not exceed 5,000 characters.';
+		}
 		if (!in_array($priority, ['LOW', 'MEDIUM', 'HIGH'], true)) {
 			return 'Invalid priority value.';
 		}

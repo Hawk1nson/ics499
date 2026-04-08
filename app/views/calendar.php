@@ -60,6 +60,12 @@
 		justify-content: center; margin: 4px; padding: 0;
 	}
 
+	/* Clickable day hint (write roles only) */
+	.cal-clickable-days .fc-daygrid-day:not(.fc-day-other):hover {
+		background: rgba(15,143,169,.05) !important;
+		cursor: pointer;
+	}
+
 	/* Event pills */
 	.fc .fc-daygrid-event {
 		border-radius: 6px; border: none !important; margin-bottom: 2px;
@@ -112,6 +118,14 @@
 	}
 	.fc .fc-list-event-title { font-size: .9rem; padding: 12px 14px; }
 	.fc .fc-list-empty-cushion { color: var(--text-muted); font-size: .9rem; }
+
+	/* ── Type filter bar ───────────────────────────────────── */
+	.cal-filter-btn {
+		border-radius: 20px; font-size: .73rem; font-weight: 600;
+		padding: 3px 11px; border: 2px solid; line-height: 1.7;
+		white-space: nowrap; transition: opacity .18s;
+	}
+	.cal-filter-btn.inactive { opacity: .32; }
 
 	/* Dark-mode overrides */
 	body.dark-mode .fc .fc-toolbar-title,
@@ -184,14 +198,51 @@
 		<section class="content">
 			<div class="container-fluid">
 				<div class="card shadow-sm">
-					<?php if ($canWriteEvents): ?>
-					<div class="card-header border-0 d-flex justify-content-end">
-						<button class="btn btn-primary btn-sm" id="newEventBtn">
-							<i class="fas fa-plus mr-1"></i>New Event
-						</button>
+					<div class="card-header border-0 py-2">
+						<div class="d-flex flex-wrap align-items-center" style="gap:.4rem;">
+							<div id="calFilterBar" class="d-flex flex-wrap" style="gap:.35rem;">
+								<small class="text-muted align-self-center mr-1" style="white-space:nowrap;">Show:</small>
+								<button type="button" class="btn cal-filter-btn"
+								        data-type="MEDICAL_CAMP" data-color="#007bff"
+								        style="background:#007bff;border-color:#007bff;color:#fff;">
+									<i class="fas fa-briefcase-medical mr-1"></i>Medical Camp
+								</button>
+								<button type="button" class="btn cal-filter-btn"
+								        data-type="EDUCATIONAL_SEMINAR" data-color="#28a745"
+								        style="background:#28a745;border-color:#28a745;color:#fff;">
+									<i class="fas fa-graduation-cap mr-1"></i>Seminar
+								</button>
+								<button type="button" class="btn cal-filter-btn"
+								        data-type="TRAINING" data-color="#17a2b8"
+								        style="background:#17a2b8;border-color:#17a2b8;color:#fff;">
+									<i class="fas fa-chalkboard-teacher mr-1"></i>Training
+								</button>
+								<button type="button" class="btn cal-filter-btn"
+								        data-type="MEETING" data-color="#e0a800"
+								        style="background:#ffc107;border-color:#e0a800;color:#212529;">
+									<i class="fas fa-users mr-1"></i>Meeting
+								</button>
+								<button type="button" class="btn cal-filter-btn"
+								        data-type="OTHER" data-color="#6c757d"
+								        style="background:#6c757d;border-color:#6c757d;color:#fff;">
+									<i class="fas fa-calendar-alt mr-1"></i>Other
+								</button>
+								<?php if (can($_SESSION['user_role'] ?? '', 'appointments')): ?>
+								<button type="button" class="btn cal-filter-btn"
+								        data-type="APPOINTMENT" data-color="#6f42c1"
+								        style="background:#6f42c1;border-color:#6f42c1;color:#fff;">
+									<i class="fas fa-calendar-check mr-1"></i>Appointments
+								</button>
+								<?php endif; ?>
+							</div>
+							<?php if ($canWriteEvents): ?>
+							<button class="btn btn-primary btn-sm ml-auto flex-shrink-0" id="newEventBtn">
+								<i class="fas fa-plus mr-1"></i>New Event
+							</button>
+							<?php endif; ?>
+						</div>
 					</div>
-					<?php endif; ?>
-					<div class="card-body">
+					<div class="card-body pt-2">
 						<div id="calendar"></div>
 					</div>
 				</div>
@@ -199,7 +250,7 @@
 		</section>
 	</div>
 
-	<!-- Create Event Modal -->
+	<!-- Create / Edit Event Modal -->
 	<?php if ($canWriteEvents): ?>
 	<div class="modal fade" id="createEventModal" tabindex="-1" role="dialog" aria-labelledby="createEventModalLabel" aria-hidden="true">
 		<div class="modal-dialog" role="document">
@@ -211,6 +262,7 @@
 				<div class="modal-body">
 					<div id="createEventError" class="alert alert-danger d-none"></div>
 					<form id="createEventForm">
+						<input type="hidden" id="evId">
 						<div class="form-group">
 							<label for="evTitle">Title <span class="text-danger">*</span></label>
 							<input type="text" class="form-control" id="evTitle" name="title" required maxlength="255">
@@ -266,6 +318,14 @@
 				</div>
 				<div class="modal-body"></div>
 				<div class="modal-footer">
+					<?php if ($canWriteEvents): ?>
+					<button type="button" class="btn btn-outline-danger btn-sm mr-auto d-none" id="eventDeleteBtn">
+						<i class="fas fa-trash mr-1"></i>Delete
+					</button>
+					<button type="button" class="btn btn-outline-primary btn-sm d-none" id="eventEditBtn">
+						<i class="fas fa-edit mr-1"></i>Edit
+					</button>
+					<?php endif; ?>
 					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
 				</div>
 			</div>
@@ -285,22 +345,28 @@
 <script src="assets/js/fullcalendar.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+
 	var typeColors = {
-		'MEDICAL_CAMP': '#007bff',
+		'MEDICAL_CAMP':        '#007bff',
 		'EDUCATIONAL_SEMINAR': '#28a745',
-		'TRAINING': '#17a2b8',
-		'MEETING': '#ffc107',
-		'OTHER': '#6c757d'
+		'TRAINING':            '#17a2b8',
+		'MEETING':             '#ffc107',
+		'OTHER':               '#6c757d',
+		'APPOINTMENT':         '#6f42c1'
 	};
 
 	var typeLabels = {
-		'MEDICAL_CAMP': 'Medical Camp',
+		'MEDICAL_CAMP':        'Medical Camp',
 		'EDUCATIONAL_SEMINAR': 'Educational Seminar',
-		'TRAINING': 'Training',
-		'MEETING': 'Meeting',
-		'OTHER': 'Other'
+		'TRAINING':            'Training',
+		'MEETING':             'Meeting',
+		'OTHER':               'Other'
 	};
 
+	var canWrite   = <?= $canWriteEvents ? 'true' : 'false' ?>;
+	var csrfToken  = <?= json_encode($_SESSION['csrf_token'] ?? '') ?>;
+
+	// ── Event data ──────────────────────────────────────────────
 	var events = <?= json_encode(array_map(function ($e) {
 		return [
 			'id'          => $e['event_id'],
@@ -318,7 +384,6 @@ document.addEventListener('DOMContentLoaded', function () {
 		e.color = typeColors[e.eventType] || '#6c757d';
 	});
 
-	// Appointment events
 	var apptEvents = <?= json_encode(array_map(function ($a) {
 		$start = $a['scheduled_date'];
 		if (!empty($a['scheduled_time'])) {
@@ -328,7 +393,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		$doctor  = 'Dr. ' . trim($a['doc_first'] . ' ' . $a['doc_last']);
 		return [
 			'id'          => 'appt-' . $a['appointment_id'],
-			'title'       => $patient . ' \u00b7 ' . $doctor,
+			'title'       => $patient . ' · ' . $doctor,
 			'start'       => $start,
 			'color'       => '#6f42c1',
 			'eventType'   => 'APPOINTMENT',
@@ -341,7 +406,59 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	events = events.concat(apptEvents);
 
-	var calendarEl = document.getElementById('calendar');
+	// ── Filter state ────────────────────────────────────────────
+	var hiddenTypes = {};
+
+	// ── Current event reference (for edit / delete) ─────────────
+	var currentFCEvent = null;
+
+	// ── Helpers ─────────────────────────────────────────────────
+	function formatDatetimeLocal(date) {
+		if (!date) return '';
+		var d = (date instanceof Date) ? date : new Date(date);
+		var pad = function (n) { return n < 10 ? '0' + n : '' + n; };
+		return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+		       'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+	}
+
+	// Normalise a FullCalendar dateStr that may include seconds: "2026-04-08T10:00:00" → "2026-04-08T10:00"
+	function normDateStr(str) {
+		return str ? str.substring(0, 16) : '';
+	}
+
+	// Open the create/edit modal.
+	// eventData = FullCalendar Event object for edit, null for create.
+	// prefillStart = "YYYY-MM-DDTHH:MM" string to pre-fill start when creating via dateClick.
+	function openEventModal(eventData, prefillStart) {
+		if (!canWrite) return;
+		var form   = document.getElementById('createEventForm');
+		var errEl  = document.getElementById('createEventError');
+		form.reset();
+		document.getElementById('evId').value = '';
+		errEl.classList.add('d-none');
+
+		if (eventData) {
+			document.getElementById('createEventModalLabel').innerHTML =
+				'<i class="fas fa-calendar-edit mr-2"></i>Edit Event';
+			document.getElementById('evId').value    = eventData.id;
+			document.getElementById('evTitle').value = eventData.title;
+			document.getElementById('evType').value  = eventData.extendedProps.eventType || 'OTHER';
+			document.getElementById('evStart').value = formatDatetimeLocal(eventData.start);
+			document.getElementById('evEnd').value   = eventData.end ? formatDatetimeLocal(eventData.end) : '';
+			document.getElementById('evLocation').value = eventData.extendedProps.location || '';
+			document.getElementById('evDesc').value     = eventData.extendedProps.description || '';
+		} else {
+			document.getElementById('createEventModalLabel').innerHTML =
+				'<i class="fas fa-calendar-plus mr-2"></i>New Event';
+			if (prefillStart) {
+				document.getElementById('evStart').value = normDateStr(prefillStart);
+			}
+		}
+		$('#createEventModal').modal('show');
+	}
+
+	// ── FullCalendar ─────────────────────────────────────────────
+	var calendarEl  = document.getElementById('calendar');
 	var evTypeIcons = {
 		'MEDICAL_CAMP':        'fa-briefcase-medical',
 		'EDUCATIONAL_SEMINAR': 'fa-graduation-cap',
@@ -355,16 +472,16 @@ document.addEventListener('DOMContentLoaded', function () {
 		initialView: 'dayGridMonth',
 		initialDate: <?= json_encode($initialDate) ?>,
 		headerToolbar: {
-			left: 'prev,next today',
+			left:   'prev,next today',
 			center: 'title',
-			right: 'dayGridMonth,timeGridWeek,listMonth'
+			right:  'dayGridMonth,timeGridWeek,listMonth'
 		},
 		fixedWeekCount: false,
-		dayMaxEvents: 3,
-		nowIndicator: true,
-		eventDisplay: 'block',
+		dayMaxEvents:   3,
+		nowIndicator:   true,
+		eventDisplay:   'block',
 		eventTimeFormat: { hour: 'numeric', minute: '2-digit', meridiem: 'short' },
-		eventContent: function(arg) {
+		eventContent: function (arg) {
 			var et   = arg.event.extendedProps.eventType || 'OTHER';
 			var icon = evTypeIcons[et] || 'fa-calendar-alt';
 			var time = arg.timeText
@@ -377,10 +494,22 @@ document.addEventListener('DOMContentLoaded', function () {
 				+ '</div>' };
 		},
 		events: events,
+
+		// Feature 1 – click an empty day to open create modal with date pre-filled
+		dateClick: function (info) {
+			if (!canWrite) return;
+			var prefill = info.allDay
+				? info.dateStr + 'T09:00'
+				: info.dateStr;
+			openEventModal(null, prefill);
+		},
+
 		eventClick: function (info) {
 			var e    = info.event;
 			var ep   = e.extendedProps;
 			var isAppt = (ep.eventType === 'APPOINTMENT');
+
+			currentFCEvent = e;
 
 			var fmtDate = { dateStyle: 'medium' };
 			var fmtTime = { timeStyle: 'short' };
@@ -394,8 +523,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
 			var bodyHtml;
 			if (isAppt) {
-				var statusLabel = {SCHEDULED:'Scheduled',CONFIRMED:'Confirmed',IN_PROGRESS:'In Progress'}[ep.apptStatus] || ep.apptStatus;
-				var statusColor = {SCHEDULED:'info',CONFIRMED:'primary',IN_PROGRESS:'warning'}[ep.apptStatus] || 'secondary';
+				var statusLabel = { SCHEDULED: 'Scheduled', CONFIRMED: 'Confirmed', IN_PROGRESS: 'In Progress' }[ep.apptStatus] || ep.apptStatus;
+				var statusColor = { SCHEDULED: 'info', CONFIRMED: 'primary', IN_PROGRESS: 'warning' }[ep.apptStatus] || 'secondary';
 				bodyHtml =
 					'<p><strong>Patient:</strong> ' + esc(ep.patient) +
 					' <small class="text-muted">(' + esc(ep.patientCode) + ')</small></p>' +
@@ -417,68 +546,185 @@ document.addEventListener('DOMContentLoaded', function () {
 			}
 
 			document.querySelector('#eventModal .modal-body').innerHTML = bodyHtml;
+
+			// Feature 3 – show Edit / Delete only for non-appointment events (write roles)
+			var editBtn   = document.getElementById('eventEditBtn');
+			var deleteBtn = document.getElementById('eventDeleteBtn');
+			if (editBtn) {
+				editBtn.classList.toggle('d-none', isAppt);
+				deleteBtn.classList.toggle('d-none', isAppt);
+			}
+
 			$('#eventModal').modal('show');
 		},
 		height: 'auto'
 	});
+
+	// Add clickable-day hint class when user has write access
+	if (canWrite) {
+		calendarEl.classList.add('cal-clickable-days');
+	}
+
 	calendar.render();
 
-	<?php if ($canWriteEvents): ?>
-	document.getElementById('newEventBtn').addEventListener('click', function () {
-		document.getElementById('createEventForm').reset();
-		document.getElementById('createEventError').classList.add('d-none');
-		$('#createEventModal').modal('show');
-	});
+	// ── Feature 5 – type filter bar ──────────────────────────────
+	document.getElementById('calFilterBar').addEventListener('click', function (e) {
+		var btn = e.target.closest('.cal-filter-btn');
+		if (!btn) return;
+		var type = btn.dataset.type;
+		var hiding = !hiddenTypes[type];
+		hiddenTypes[type] = hiding;
 
-	document.getElementById('createEventSave').addEventListener('click', function () {
-		var btn = this;
-		var form = document.getElementById('createEventForm');
-		var errEl = document.getElementById('createEventError');
-		errEl.classList.add('d-none');
-
-		var title = document.getElementById('evTitle').value.trim();
-		var start = document.getElementById('evStart').value;
-		if (!title || !start) {
-			errEl.textContent = 'Title and start date/time are required.';
-			errEl.classList.remove('d-none');
-			return;
+		if (hiding) {
+			btn.style.background    = '';
+			btn.style.color         = btn.dataset.color;
+			btn.style.borderColor   = btn.dataset.color;
+			btn.classList.add('inactive');
+		} else {
+			var isMeeting = (type === 'MEETING');
+			btn.style.background    = btn.dataset.color;
+			btn.style.color         = isMeeting ? '#212529' : '#fff';
+			btn.style.borderColor   = btn.dataset.color;
+			btn.classList.remove('inactive');
 		}
 
-		btn.disabled = true;
-		var data = new FormData(form);
-		data.append('csrf_token', <?= json_encode($_SESSION['csrf_token'] ?? '') ?>);
-
-		fetch('calendar.php', { method: 'POST', body: data })
-			.then(function (r) { return r.json(); })
-			.then(function (res) {
-				if (!res.success) {
-					errEl.textContent = res.message || 'Error saving event.';
-					errEl.classList.remove('d-none');
-					return;
-				}
-				var evType = form.event_type.value;
-				calendar.addEvent({
-					id:          res.event_id,
-					title:       title,
-					start:       start,
-					end:         form.end_datetime.value || undefined,
-					color:       typeColors[evType] || '#6c757d',
-					extendedProps: {
-						eventType:   evType,
-						location:    form.location_name.value,
-						description: form.description.value,
-						status:      'SCHEDULED',
-					},
-				});
-				$('#createEventModal').modal('hide');
-			})
-			.catch(function () {
-				errEl.textContent = 'Network error. Please try again.';
-				errEl.classList.remove('d-none');
-			})
-			.finally(function () { btn.disabled = false; });
+		calendar.getEvents().forEach(function (ev) {
+			var et = ev.extendedProps.eventType || 'OTHER';
+			if (et === type) {
+				ev.setProp('display', hiding ? 'none' : 'auto');
+			}
+		});
 	});
-	<?php endif; ?>
+
+	// ── New Event button ─────────────────────────────────────────
+	var newEventBtn = document.getElementById('newEventBtn');
+	if (newEventBtn) {
+		newEventBtn.addEventListener('click', function () {
+			openEventModal(null, null);
+		});
+	}
+
+	// ── Save button (create or update) ──────────────────────────
+	var saveBtn = document.getElementById('createEventSave');
+	if (saveBtn) {
+		saveBtn.addEventListener('click', function () {
+			var btn   = this;
+			var form  = document.getElementById('createEventForm');
+			var errEl = document.getElementById('createEventError');
+			errEl.classList.add('d-none');
+
+			var title  = document.getElementById('evTitle').value.trim();
+			var start  = document.getElementById('evStart').value;
+			var evId   = document.getElementById('evId').value;
+			var evType = document.getElementById('evType').value;
+
+			if (!title || !start) {
+				errEl.textContent = 'Title and start date/time are required.';
+				errEl.classList.remove('d-none');
+				return;
+			}
+
+			btn.disabled = true;
+			var data = new FormData(form);
+			data.append('csrf_token', csrfToken);
+
+			if (evId) {
+				data.append('action', 'update');
+				data.append('event_id', evId);
+			}
+			// no action field → server defaults to 'create'
+
+			fetch('calendar.php', { method: 'POST', body: data })
+				.then(function (r) { return r.json(); })
+				.then(function (res) {
+					if (!res.success) {
+						errEl.textContent = res.message || 'Error saving event.';
+						errEl.classList.remove('d-none');
+						return;
+					}
+					var color = typeColors[evType] || '#6c757d';
+					if (evId) {
+						// Update existing event in calendar
+						var ev = calendar.getEventById(evId);
+						if (ev) {
+							ev.setProp('title', title);
+							ev.setStart(start);
+							ev.setEnd(form.end_datetime.value || null);
+							ev.setExtendedProp('eventType',   evType);
+							ev.setExtendedProp('location',    form.location_name.value);
+							ev.setExtendedProp('description', form.description.value);
+							ev.setProp('color', color);
+							if (hiddenTypes[evType]) ev.setProp('display', 'none');
+						}
+					} else {
+						// Add new event and respect active filter state
+						var newEv = calendar.addEvent({
+							id:    res.event_id,
+							title: title,
+							start: start,
+							end:   form.end_datetime.value || undefined,
+							color: color,
+							extendedProps: {
+								eventType:   evType,
+								location:    form.location_name.value,
+								description: form.description.value,
+								status:      'SCHEDULED',
+							},
+						});
+						if (newEv && hiddenTypes[evType]) {
+							newEv.setProp('display', 'none');
+						}
+					}
+					$('#createEventModal').modal('hide');
+				})
+				.catch(function () {
+					errEl.textContent = 'Network error. Please try again.';
+					errEl.classList.remove('d-none');
+				})
+				.finally(function () { btn.disabled = false; });
+		});
+	}
+
+	// ── Feature 3 – Edit button in detail modal ──────────────────
+	var editBtn = document.getElementById('eventEditBtn');
+	if (editBtn) {
+		editBtn.addEventListener('click', function () {
+			$('#eventModal').modal('hide');
+			// Wait for detail modal to finish closing before opening edit modal
+			$('#eventModal').one('hidden.bs.modal', function () {
+				openEventModal(currentFCEvent, null);
+			});
+		});
+	}
+
+	// ── Feature 3 – Delete button in detail modal ────────────────
+	var deleteBtn = document.getElementById('eventDeleteBtn');
+	if (deleteBtn) {
+		deleteBtn.addEventListener('click', function () {
+			if (!currentFCEvent) return;
+			var title = currentFCEvent.title;
+			if (!confirm('Delete "' + title + '"?\n\nThis cannot be undone.')) return;
+
+			var data = new FormData();
+			data.append('action',     'delete');
+			data.append('event_id',   currentFCEvent.id);
+			data.append('csrf_token', csrfToken);
+
+			fetch('calendar.php', { method: 'POST', body: data })
+				.then(function (r) { return r.json(); })
+				.then(function (res) {
+					if (!res.success) {
+						alert(res.message || 'Error deleting event.');
+						return;
+					}
+					currentFCEvent.remove();
+					$('#eventModal').modal('hide');
+				})
+				.catch(function () {
+					alert('Network error. Please try again.');
+				});
+		});
+	}
 });
 </script>
 </body>

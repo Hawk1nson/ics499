@@ -37,8 +37,8 @@ Options -Indexes
     # Strict Transport Security (enforces HTTPS — BlueHost supports it)
     Header set Strict-Transport-Security "max-age=31536000; includeSubDomains"
 
-    # Block cross-site scripting vectors
-    Header set X-XSS-Protection "1; mode=block"
+    # Disable legacy XSS auditor (deprecated; modern browsers ignore it; CSP handles XSS)
+    Header set X-XSS-Protection "0"
 
     # Content Security Policy
     # self: pages and AJAX; unsafe-inline: Bootstrap/AdminLTE inline styles/scripts;

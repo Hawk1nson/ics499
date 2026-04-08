@@ -15,6 +15,13 @@ if (!isset($_SESSION['csrf_token'])) {
 }
 
 require_once __DIR__ . '/app/middleware/auth.php';
+require_once __DIR__ . '/app/config/permissions.php';
+
+if (!can($_SESSION['user_role'] ?? '', 'analytics', 'R')) {
+    header('Location: dashboard.php');
+    exit;
+}
+
 require_once __DIR__ . '/app/controllers/AnalyticsController.php';
 
 $controller = new AnalyticsController();

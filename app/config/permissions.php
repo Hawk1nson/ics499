@@ -21,6 +21,7 @@
  *   tasks         – to-do / task list (tasks.php)
  *   appointments  – appointment scheduling (appointments.php)
  *   labwork       – lab order placement and result recording (lab_results.php)
+ *   analytics     – analytics & reporting (analytics.php)
  */
 
 require_once __DIR__ . '/database.php';
@@ -44,6 +45,7 @@ function _load_permissions(): array
 			'tasks'         => 'RW',
 			'appointments'  => 'RW',
 			'labwork'       => 'RW',
+			'analytics'     => 'R',
 		],
 		'ADMIN' => [
 			'assets'        => 'RW',
@@ -56,6 +58,7 @@ function _load_permissions(): array
 			'tasks'         => 'RW',
 			'appointments'  => 'RW',
 			'labwork'       => 'RW',
+			'analytics'     => 'R',
 		],
 		'DOCTOR' => [
 			'assets'        => 'R',
@@ -68,6 +71,7 @@ function _load_permissions(): array
 			'tasks'         => 'RW',
 			'appointments'  => 'R',
 			'labwork'       => 'RW',
+			'analytics'     => 'R',
 		],
 		'TRIAGE_NURSE' => [
 			'assets'        => 'R',
@@ -80,6 +84,7 @@ function _load_permissions(): array
 			'tasks'         => 'RW',
 			'appointments'  => 'RW',
 			'labwork'       => 'RW',
+			'analytics'     => 'N',
 		],
 		'NURSE' => [
 			'assets'        => 'R',
@@ -92,6 +97,7 @@ function _load_permissions(): array
 			'tasks'         => 'RW',
 			'appointments'  => 'RW',
 			'labwork'       => 'RW',
+			'analytics'     => 'N',
 		],
 		'PARAMEDIC' => [
 			'assets'        => 'R',
@@ -104,6 +110,7 @@ function _load_permissions(): array
 			'tasks'         => 'RW',
 			'appointments'  => 'R',
 			'labwork'       => 'R',
+			'analytics'     => 'N',
 		],
 		'GRIEVANCE_OFFICER' => [
 			'assets'        => 'N',
@@ -116,6 +123,7 @@ function _load_permissions(): array
 			'tasks'         => 'RW',
 			'appointments'  => 'N',
 			'labwork'       => 'N',
+			'analytics'     => 'N',
 		],
 		'EDUCATION_TEAM' => [
 			'assets'        => 'RW',
@@ -128,6 +136,7 @@ function _load_permissions(): array
 			'tasks'         => 'RW',
 			'appointments'  => 'N',
 			'labwork'       => 'N',
+			'analytics'     => 'N',
 		],
 		'DATA_ENTRY_OPERATOR' => [
 			'assets'        => 'R',
@@ -140,6 +149,7 @@ function _load_permissions(): array
 			'tasks'         => 'RW',
 			'appointments'  => 'N',
 			'labwork'       => 'N',
+			'analytics'     => 'N',
 		],
 	];
 

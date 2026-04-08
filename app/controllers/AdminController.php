@@ -77,7 +77,7 @@ class AdminController
 
         $canWriteEvents = can($role, 'events', 'W');
 
-        // ── Handle POST: create event (AJAX) ───────────────────
+        // ── Handle POST: create / update / delete event (AJAX) ─
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Content-Type: application/json');
 
@@ -91,6 +91,27 @@ class AdminController
                 exit;
             }
 
+            $postAction = $_POST['action'] ?? 'create';
+
+            // ── Delete ──────────────────────────────────────────
+            if ($postAction === 'delete') {
+                $eventId = (int)($_POST['event_id'] ?? 0);
+                if (!$eventId) {
+                    echo json_encode(['success' => false, 'message' => 'Invalid event ID.']);
+                    exit;
+                }
+                try {
+                    $pdo->prepare('UPDATE events SET is_active = 0 WHERE event_id = ?')
+                        ->execute([$eventId]);
+                    echo json_encode(['success' => true]);
+                } catch (\PDOException $e) {
+                    error_log('deleteEvent error: ' . $e->getMessage());
+                    echo json_encode(['success' => false, 'message' => 'Database error.']);
+                }
+                exit;
+            }
+
+            // ── Shared field parsing (create + update) ──────────
             $title       = trim($_POST['title'] ?? '');
             $eventType   = $_POST['event_type'] ?? 'OTHER';
             $startDt     = trim($_POST['start_datetime'] ?? '');
@@ -114,6 +135,27 @@ class AdminController
                 exit;
             }
 
+            // ── Update ──────────────────────────────────────────
+            if ($postAction === 'update') {
+                $eventId = (int)($_POST['event_id'] ?? 0);
+                if (!$eventId) {
+                    echo json_encode(['success' => false, 'message' => 'Invalid event ID.']);
+                    exit;
+                }
+                try {
+                    $pdo->prepare(
+                        'UPDATE events SET title=?, description=?, event_type=?, start_datetime=?,
+                         end_datetime=?, location_name=? WHERE event_id=? AND is_active=1'
+                    )->execute([$title, $description, $eventType, $startDt, $endDt, $location, $eventId]);
+                    echo json_encode(['success' => true]);
+                } catch (\PDOException $e) {
+                    error_log('updateEvent error: ' . $e->getMessage());
+                    echo json_encode(['success' => false, 'message' => 'Database error.']);
+                }
+                exit;
+            }
+
+            // ── Create (default) ────────────────────────────────
             try {
                 $pdo->prepare(
                     'INSERT INTO events (title, description, event_type, start_datetime, end_datetime,

@@ -150,6 +150,10 @@ function writeAudit(PDO $pdo, $caseSheetId, int $userId, string $field, ?string 
 
 /**
  * Merge a single key into a JSON column, log the change, and update updated_at.
+ *
+ * IMPORTANT: $column is always a hardcoded string literal from the call sites below
+ * ('vitals_json', 'exam_notes', 'assessment', 'diagnosis', 'plan_notes').
+ * It is never derived from user input, so interpolation here is safe.
  */
 function mergeJsonField(PDO $pdo, string $column, string $field, $value, $caseSheetId, int $userId): void
 {
@@ -178,6 +182,14 @@ function mergeJsonField(PDO $pdo, string $column, string $field, $value, $caseSh
 
 try {
 	if (in_array($field, $direct_columns, true)) {
+		// Defence-in-depth: after whitelist check, assert $field is a safe SQL identifier.
+		// PDO cannot parameterize column names; the whitelist above is the primary guard,
+		// but this regex ensures interpolation is safe even if the whitelist is ever misedited.
+		if (!preg_match('/^[a-z][a-z0-9_]*$/', $field)) {
+			echo json_encode(['success' => false, 'message' => 'Invalid field']);
+			exit;
+		}
+
 		// Read old value for audit
 		$stmt = $pdo->prepare("SELECT `$field` FROM case_sheets WHERE case_sheet_id = ?");
 		$stmt->execute([$caseSheetId]);

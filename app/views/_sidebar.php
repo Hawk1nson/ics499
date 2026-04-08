@@ -42,6 +42,7 @@ $_navCanTasks           = can($_userRole, 'tasks');            // Tasks
 $_navCanAssets          = can($_userRole, 'assets');           // Assets
 $_navCanUsers           = can($_userRole, 'users');            // Admin Panel
 $_navCanLabwork         = can($_userRole, 'labwork');          // Labwork
+$_navCanAnalytics       = can($_userRole, 'analytics');        // Analytics
 
 // ── Sidebar appointment badge (today's count) ───────────────────────────────
 // Gate matches the appointments page access requirement (case_sheets read).
@@ -215,13 +216,14 @@ if ($_navCanMessages && !$isMessagesPage) {
 				</li>
 				<?php endif; ?>
 
-				<!-- Analytics – always visible -->
+				<?php if ($_navCanAnalytics): ?>
 				<li class="nav-item">
 					<a href="analytics.php" class="nav-link <?= $isAnalyticsPage ? 'active' : '' ?>">
 						<i class="nav-icon fas fa-chart-bar"></i>
 						<p>Analytics</p>
 					</a>
 				</li>
+				<?php endif; ?>
 
 				<!-- Profile – always visible -->
 				<li class="nav-item">
