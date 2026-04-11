@@ -202,6 +202,18 @@
 - Vitals comparison, lab comparison, and menstrual comparison panels in `review.php` use the same `vitalsCompare()` helper and `__()` labels as the intake view
 - 71 new keys added to `lang/labels_en.csv` and `lang/labels_te.csv`
 
+### Doctor Review — Sticky Patient Header & Lab Order Modal *(2026-04-11)*
+- Patient name and patient code are now pinned in the fixed top navbar of the doctor review page (`review.php`), matching the behaviour already in place on the intake form
+- "Order Lab Test" modal added to the Labs tab of the doctor review page — full 50+ categorised test list with live filter, AJAX POST to `intake.php?action=order-lab-test`, and auto-reload of the lab orders table on success; consistent with the identical modal in `intake.php`
+
+### README Overhaul *(2026-04-11)*
+- Expanded setup guide: step-by-step XAMPP start, database creation, `.env` configuration, ordered migration list, and test data loading instructions
+- Added full test credentials table (staff accounts + patient portal accounts)
+- Added Patient Portal section documenting URLs, portal pages, and account management
+
+### Developer Utility *(2026-04-11)*
+- `create_test_portal_accounts.php` — one-off localhost-only script to seed patient portal test accounts; intended to be deleted after use
+
 ### Security Fixes *(2026-04-01)*
 - **Stored XSS — patient search dropdown** (`intake.php`): patient data fields (`first_name`, `last_name`, `patient_code`, `sex`, `age_years`, `phone_e164`) are now HTML-escaped via jQuery's `$('<span>').text(v).html()` before being inserted into the search results list; previously these were concatenated into a raw HTML string and injectable
 - **Flash message escaping** (`intake.php`): `$flashSuccess` now passes through `htmlspecialchars()` at the output point, consistent with all other flash/error messages in the codebase
