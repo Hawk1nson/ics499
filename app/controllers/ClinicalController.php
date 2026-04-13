@@ -877,10 +877,9 @@ class ClinicalController
 
 		$caseSheetId = (int)($input['case_sheet_id'] ?? 0);
 		$tests       = $input['tests'] ?? [];
-		$notes       = trim($input['notes'] ?? '');
 
 		if ($caseSheetId <= 0 || empty($tests)) {
-			echo json_encode(['success' => false, 'message' => 'Please select at least one test.']);
+			echo json_encode(['success' => false, 'message' => 'Please enter at least one test.']);
 			exit;
 		}
 
@@ -903,16 +902,17 @@ class ClinicalController
 		);
 
 		$inserted = [];
-		foreach ($tests as $testName) {
-			$testName = trim((string)$testName);
+		foreach ($tests as $entry) {
+			$testName  = trim((string)($entry['test_name'] ?? ''));
+			$testNotes = trim((string)($entry['notes'] ?? ''));
 			if ($testName === '') {
 				continue;
 			}
 			if (strlen($testName) > 255) {
 				continue;
 			}
-			$insert->execute([$caseSheetId, $patientId, $testName, $notes !== '' ? $notes : null, $userId]);
-			$inserted[] = ['order_id' => (int)$pdo->lastInsertId(), 'test_name' => $testName];
+			$insert->execute([$caseSheetId, $patientId, $testName, $testNotes !== '' ? $testNotes : null, $userId]);
+			$inserted[] = ['order_id' => (int)$pdo->lastInsertId(), 'test_name' => $testName, 'notes' => $testNotes];
 		}
 
 		$orderedBy = trim(($_SESSION['user_name'] ?? ''));
@@ -920,7 +920,6 @@ class ClinicalController
 		echo json_encode([
 			'success'    => true,
 			'orders'     => $inserted,
-			'notes'      => $notes,
 			'ordered_by' => $orderedBy,
 		]);
 		exit;

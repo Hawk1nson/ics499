@@ -1488,41 +1488,73 @@ load_language($_SESSION['language'] ?? 'en');
 
 		// ── Lab order modal ─────────────────────────────
 		(function () {
-			var $modal      = $('#labOrderModal');
-			var $filter     = $('#labTestFilter');
-			var $error      = $('#labOrderError');
-			var $submitBtn  = $('#btnSubmitLabOrder');
-			var $notes      = $('#labOrderNotes');
-			var $noOrders   = $('#noLabOrders');
-			var $table      = $('#labOrdersTable');
-			var $tbody      = $('#labOrdersBody');
+			var $modal     = $('#labOrderModal');
+			var $rows      = $('#labTestRows');
+			var $error     = $('#labOrderError');
+			var $submitBtn = $('#btnSubmitLabOrder');
+			var $noOrders  = $('#noLabOrders');
+			var $table     = $('#labOrdersTable');
+			var $tbody     = $('#labOrdersBody');
 
-			// Filter test checkboxes by text
-			$filter.on('input', function () {
-				var q = this.value.toLowerCase();
-				$modal.find('.lab-test-item').each(function () {
-					var match = $(this).find('label').text().toLowerCase().indexOf(q) !== -1;
-					$(this).toggle(q === '' || match);
-				});
-				$modal.find('.lab-category-group').each(function () {
-					$(this).toggle($(this).find('.lab-test-item:visible').length > 0);
-				});
+			var rowTemplate =
+				'<div class="lab-test-row mb-3">' +
+				'<div class="d-flex align-items-center mb-1">' +
+				'<span class="font-weight-bold small mr-2" style="min-width:3rem;">Test</span>' +
+				'<input type="text" class="form-control form-control-sm lab-test-name" placeholder="e.g. Complete Blood Count (CBC)" autocomplete="off" />' +
+				'<button type="button" class="btn btn-outline-danger btn-sm btn-remove-row ml-2" aria-label="Remove test"><i class="fas fa-times"></i></button>' +
+				'</div>' +
+				'<div class="d-flex align-items-center">' +
+				'<span class="text-muted small mr-2" style="min-width:3rem;">Notes</span>' +
+				'<input type="text" class="form-control form-control-sm lab-test-notes" placeholder="Optional notes for this test" />' +
+				'</div>' +
+				'</div>';
+
+			// Add another row
+			$('#btnAddLabRow').on('click', function () {
+				$rows.append(rowTemplate);
+				$rows.find('.btn-remove-row').show();
+				$rows.find('.lab-test-name').last().focus();
+			});
+
+			// Remove a row (delegate)
+			$rows.on('click', '.btn-remove-row', function () {
+				$(this).closest('.lab-test-row').remove();
+				if ($rows.find('.lab-test-row').length === 1) {
+					$rows.find('.btn-remove-row').hide();
+				}
 			});
 
 			// Reset modal state on close
 			$modal.on('hidden.bs.modal', function () {
-				$modal.find('.lab-test-cb').prop('checked', false);
-				$notes.val('');
-				$filter.val('').trigger('input');
+				$rows.html(
+					'<div class="lab-test-row mb-3">' +
+					'<div class="d-flex align-items-center mb-1">' +
+					'<span class="font-weight-bold small mr-2" style="min-width:3rem;">Test</span>' +
+					'<input type="text" class="form-control form-control-sm lab-test-name" placeholder="e.g. Complete Blood Count (CBC)" autocomplete="off" />' +
+					'<button type="button" class="btn btn-outline-danger btn-sm btn-remove-row ml-2" style="display:none;" aria-label="Remove test"><i class="fas fa-times"></i></button>' +
+					'</div>' +
+					'<div class="d-flex align-items-center">' +
+					'<span class="text-muted small mr-2" style="min-width:3rem;">Notes</span>' +
+					'<input type="text" class="form-control form-control-sm lab-test-notes" placeholder="Optional notes for this test" />' +
+					'</div>' +
+					'</div>'
+				);
 				$error.addClass('d-none').text('');
 				$submitBtn.prop('disabled', false).html('<i class="fas fa-paper-plane mr-1"></i>Submit Order');
 			});
 
 			// Submit order
 			$submitBtn.on('click', function () {
-				var tests = $modal.find('.lab-test-cb:checked').map(function () { return this.value; }).get();
+				var tests = [];
+				$rows.find('.lab-test-row').each(function () {
+					var name = $(this).find('.lab-test-name').val().trim();
+					var notes = $(this).find('.lab-test-notes').val().trim();
+					if (name !== '') {
+						tests.push({ test_name: name, notes: notes });
+					}
+				});
 				if (!tests.length) {
-					$error.text('Please select at least one test.').removeClass('d-none');
+					$error.text('Please enter at least one test name.').removeClass('d-none');
 					return;
 				}
 				$error.addClass('d-none');
@@ -1535,8 +1567,7 @@ load_language($_SESSION['language'] ?? 'en');
 					data: JSON.stringify({
 						csrf_token: csrfToken,
 						case_sheet_id: caseSheetId,
-						tests: tests,
-						notes: $notes.val().trim()
+						tests: tests
 					}),
 					dataType: 'json',
 					success: function (r) {
@@ -1548,10 +1579,10 @@ load_language($_SESSION['language'] ?? 'en');
 						$modal.modal('hide');
 						$noOrders.hide();
 						$table.removeClass('d-none');
-						var noteTd = r.notes ? escHtml(r.notes) : '<em class="text-muted">—</em>';
-						var by     = escHtml(r.ordered_by || 'You');
-						var now    = new Date().toLocaleString('en-US', {month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',hour12:true});
+						var by  = escHtml(r.ordered_by || 'You');
+						var now = new Date().toLocaleString('en-US', {month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',hour12:true});
 						r.orders.forEach(function (o) {
+							var noteTd = o.notes ? escHtml(o.notes) : '<em class="text-muted">—</em>';
 							$tbody.prepend(
 								'<tr>' +
 								'<td>' + escHtml(o.test_name) + '</td>' +
@@ -1643,112 +1674,24 @@ load_language($_SESSION['language'] ?? 'en');
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 			</div>
 			<div class="modal-body">
-				<div class="form-group mb-3">
-					<label class="font-weight-bold"><?= __('filter_tests') ?></label>
-					<input type="text" class="form-control" id="labTestFilter" placeholder="<?= __('filter_placeholder') ?>" autocomplete="off" />
-				</div>
-				<div id="labTestList" style="max-height:380px;overflow-y:auto;border:1px solid #dee2e6;border-radius:4px;padding:12px;">
-<?php
-$_labCategories = [
-	'Hematology' => [
-		'Complete Blood Count (CBC)',
-		'Peripheral Blood Smear',
-		'Hemoglobin (Hb)',
-		'Erythrocyte Sedimentation Rate (ESR)',
-		'Reticulocyte Count',
-	],
-	'Chemistry' => [
-		'Basic Metabolic Panel (BMP)',
-		'Comprehensive Metabolic Panel (CMP)',
-		'Liver Function Tests (LFT)',
-		'Kidney Function Tests (KFT)',
-		'Lipid Panel',
-		'Serum Electrolytes (Na/K/Cl/HCO₃)',
-		'Serum Calcium',
-		'Serum Magnesium',
-		'Serum Phosphorus',
-		'Serum Uric Acid',
-		'Blood Urea Nitrogen (BUN)',
-		'Serum Creatinine',
-		'Serum Amylase',
-		'Serum Lipase',
-	],
-	'Endocrinology' => [
-		'Thyroid Panel (TSH, Free T3, Free T4)',
-		'Hemoglobin A1C (HbA1c)',
-		'Fasting Blood Glucose (FBG)',
-		'FSH / LH / Estradiol',
-		'Testosterone',
-		'Prolactin',
-		'Cortisol (Morning)',
-		'ACTH Stimulation Test',
-	],
-	'Vitamins &amp; Micronutrients' => [
-		'Serum Iron / TIBC / Ferritin',
-		'Vitamin B12',
-		'Vitamin D (25-OH)',
-		'Serum Folate',
-	],
-	'Coagulation' => [
-		'Prothrombin Time / INR (PT/INR)',
-		'Partial Thromboplastin Time (PTT)',
-		'D-Dimer',
-	],
-	'Cardiac Markers' => [
-		'Troponin I',
-		'BNP / NT-proBNP',
-	],
-	'Inflammation &amp; Immunology' => [
-		'C-Reactive Protein (CRP)',
-		'Antistreptolysin O Titer (ASO)',
-		'Rheumatoid Factor (RF)',
-		'ANA (Antinuclear Antibody)',
-		'Anti-dsDNA',
-	],
-	'Infectious Disease' => [
-		'Blood Culture &amp; Sensitivity',
-		'Urine Culture &amp; Sensitivity',
-		'Sputum Culture',
-		'HIV Rapid Test',
-		'Hepatitis B Surface Antigen (HBsAg)',
-		'Hepatitis C Antibody (Anti-HCV)',
-		'Malaria Rapid Diagnostic Test (RDT)',
-		'Dengue NS1 / IgM / IgG',
-		'COVID-19 Rapid Antigen Test',
-		'Sputum AFB Smear (TB)',
-	],
-	'Urinalysis &amp; Stool' => [
-		'Urinalysis (UA)',
-		'Stool Analysis',
-	],
-	'Gynecology &amp; Cytology' => [
-		'Papanicolaou (Pap) Smear',
-		'Colposcopy',
-		'Cervical Biopsy',
-		'Beta-hCG (Pregnancy Test)',
-	],
-	'Other' => [
-		'Arterial Blood Gas (ABG)',
-	],
-];
-$_labIdx = 0;
-foreach ($_labCategories as $_labCat => $_labTests): ?>
-					<div class="lab-category-group mb-3">
-						<div class="font-weight-bold text-uppercase small text-muted mb-1" style="letter-spacing:.05em;"><?= $_labCat ?></div>
-						<?php foreach ($_labTests as $_labTest): $_labIdx++; ?>
-						<div class="lab-test-item custom-control custom-checkbox">
-							<input type="checkbox" class="custom-control-input lab-test-cb" id="lt<?= $_labIdx ?>" value="<?= htmlspecialchars($_labTest) ?>">
-							<label class="custom-control-label" for="lt<?= $_labIdx ?>"><?= htmlspecialchars($_labTest) ?></label>
+				<p class="text-muted small mb-3">Enter each lab test and optional notes. Use <strong>Add Another Test</strong> for multiple orders.</p>
+				<div id="labTestRows">
+					<div class="lab-test-row mb-3">
+						<div class="d-flex align-items-center mb-1">
+							<span class="font-weight-bold small mr-2" style="min-width:3rem;">Test</span>
+							<input type="text" class="form-control form-control-sm lab-test-name" placeholder="e.g. Complete Blood Count (CBC)" autocomplete="off" />
+							<button type="button" class="btn btn-outline-danger btn-sm btn-remove-row ml-2" style="display:none;" aria-label="Remove test"><i class="fas fa-times"></i></button>
 						</div>
-						<?php endforeach; ?>
+						<div class="d-flex align-items-center">
+							<span class="text-muted small mr-2" style="min-width:3rem;">Notes</span>
+							<input type="text" class="form-control form-control-sm lab-test-notes" placeholder="Optional notes for this test" />
+						</div>
 					</div>
-<?php endforeach; ?>
 				</div>
-				<div class="form-group mt-3 mb-1">
-					<label class="font-weight-bold" for="labOrderNotes"><?= __('order_notes_label') ?> <small class="font-weight-normal text-muted"><?= __('order_notes_hint') ?></small></label>
-					<textarea class="form-control" id="labOrderNotes" rows="2" placeholder="<?= __('order_notes_placeholder') ?>"></textarea>
-				</div>
-				<div class="alert alert-danger d-none mt-2 mb-0" id="labOrderError"></div>
+				<button type="button" class="btn btn-outline-primary btn-sm" id="btnAddLabRow">
+					<i class="fas fa-plus mr-1"></i>Add Another Test
+				</button>
+				<div class="alert alert-danger d-none mt-3 mb-0" id="labOrderError"></div>
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" data-dismiss="modal"><?= __('cancel') ?></button>

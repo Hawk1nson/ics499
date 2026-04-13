@@ -245,3 +245,14 @@
 - Analytics dashboard (`analytics.php`) accessible to all authenticated roles; `AnalyticsController::buildScope()` gates what each role can see (admins see system-wide data; clinical roles see own-department data)
 - Migration 025 adds `analytics` resource to the role permissions table
 - Sidebar "Analytics" link visible to all authenticated users
+
+### Sidebar i18n — Analytics & Patient Messages *(2026-04-09)*
+- "Analytics" and "Patient Messages" sidebar links were the last two hard-coded English strings in `_sidebar.php`; both now run through `__()`
+- `nav_analytics` and `nav_patient_messages` keys added to `lang/labels_en.csv` and `lang/labels_te.csv`
+
+### Labwork — Text-Based Lab Order Entry *(2026-04-13)*
+- Replaced the 50+ categorised checkbox picker in the "Order Lab Test" modal (intake and doctor review) with a free-text entry system
+- Each order row has a **Test** field (required) and a **Notes** field (optional); users can add as many rows as needed via **Add Another Test**, and remove any row with the × button
+- Notes are now per-test rather than shared across all tests in a single order, enabling more precise instructions per ordered item
+- `ClinicalController::orderLabTest()` updated to accept `tests` as an array of `{test_name, notes}` objects; each entry is inserted as a separate row in `lab_orders` with its own `order_notes`
+- Submitted orders appear immediately in the inline lab orders table (intake) or reload via AJAX (doctor review) and flow through to the Labwork queue page unchanged
