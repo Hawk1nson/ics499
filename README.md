@@ -56,6 +56,8 @@ REGISTRATION_CODE=devcode123   # pick anything — used to gate self-registratio
 
 ### Step 5 — Run all migrations (in order)
 
+> **Shortcut:** If you want to skip Steps 5 and 6 entirely, import **`sql/complete_setup.sql`** instead. This is a full database dump (schema + all test data) taken from a known-good state. Just import it into a fresh `core_app` database and jump straight to Step 7. Use the migration path below if you need to understand what each step does or need to apply only specific changes.
+
 Open phpMyAdmin → select the `core_app` database → click the **SQL** tab.
 
 Run each file in **`sql/migrations/`** in the numbered order below. Copy the contents of each file, paste into the SQL tab, and click **Go**. Then repeat for the next file.
