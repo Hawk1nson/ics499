@@ -259,6 +259,16 @@
 												<?php endif; ?>
 											</form>
 											<?php endif; ?>
+											<?php if ($canEdit && $task['status'] === 'DONE'): ?>
+											<form method="post" action="tasks.php?action=update" class="d-inline">
+												<input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>" />
+												<input type="hidden" name="task_id" value="<?= (int)$task['task_id'] ?>" />
+												<input type="hidden" name="status" value="IN_PROGRESS" />
+												<button type="submit" class="btn btn-sm btn-outline-secondary" title="Reopen task">
+													<i class="fas fa-undo"></i>
+												</button>
+											</form>
+											<?php endif; ?>
 											<?php if ($canEdit): ?>
 											<form method="post" action="tasks.php?action=delete" class="d-inline"
 											      onsubmit="return confirm('Delete this task?')">

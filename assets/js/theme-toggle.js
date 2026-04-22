@@ -2,6 +2,9 @@
 	const storageKey = 'theme';
 	const className = 'dark-mode';
 
+	const osPrefersDark = () =>
+		window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
 	const getPreferredTheme = () => {
 		// Server-stored preference takes priority (set via data-theme-server on <body>)
 		const serverPref = document.body.dataset.themeServer;
@@ -10,14 +13,18 @@
 			return serverPref;
 		}
 
-		// Fall back to localStorage, then OS preference
+		// 'system' (or missing): clear any stale localStorage and follow OS
+		if (serverPref === 'system') {
+			localStorage.removeItem(storageKey);
+			return osPrefersDark() ? 'dark' : 'light';
+		}
+
+		// No server pref at all: fall back to localStorage, then OS
 		const stored = localStorage.getItem(storageKey);
 		if (stored === 'light' || stored === 'dark') {
 			return stored;
 		}
-		return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-			? 'dark'
-			: 'light';
+		return osPrefersDark() ? 'dark' : 'light';
 	};
 
 	const setNavbarTheme = (isDark) => {
@@ -55,6 +62,15 @@
 
 	const init = () => {
 		applyTheme(getPreferredTheme());
+
+		// While server pref is 'system', track OS changes live
+		if (window.matchMedia) {
+			window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+				if (document.body.dataset.themeServer === 'system') {
+					applyTheme(osPrefersDark() ? 'dark' : 'light');
+				}
+			});
+		}
 
 		document.querySelectorAll('[data-theme-toggle]').forEach((toggle) => {
 			toggle.addEventListener('change', (event) => {

@@ -1,5 +1,24 @@
 # Changelog
 
+### Appointments — DOB Auto-Fill on Scheduling *(2026-04-22)*
+- `AppointmentController` now includes `p.date_of_birth` in the pending-case-sheets query so the date is available client-side
+- When opening the schedule modal from the Pending Assignment tab, the patient's date of birth is automatically pre-filled in the DOB filter field
+- Selecting a patient from the search dropdown also sets the DOB field; creating a new patient from within the modal uses the DOB entered in the new-patient form
+- "Date of Birth" label added to the DOB input so the field purpose is explicit
+
+### Tasks — Reopen Completed Tasks *(2026-04-22)*
+- A **Reopen** button (undo icon) now appears on tasks in the `DONE` state, allowing staff to move them back to `IN_PROGRESS` without deleting and re-creating the task
+- Button is gated by the same `$canEdit` flag used for other task actions (own tasks for all roles; all tasks for admins)
+
+### Theme — System Preference Support & Live OS Tracking *(2026-04-22)*
+- `theme-toggle.js` now handles `'system'` as an explicit server-stored preference: stale `localStorage` is cleared and the theme follows `prefers-color-scheme` directly
+- A `matchMedia` change listener keeps the theme in sync in real-time if the OS light/dark setting changes while the page is open (only when server preference is `'system'`)
+- `osPrefersDark()` extracted as a named helper to deduplicate the `matchMedia` check
+
+### Dashboard — Self-Hosted SortableJS & Drag-Safe Queue Polling *(2026-04-22)*
+- SortableJS now loaded from `assets/js/sortable.min.js` instead of `cdn.jsdelivr.net` — consistent with all other third-party libraries (FullCalendar, Tom Select) and removes the CDN dependency
+- Live queue poll timer pauses when a drag begins (`onStart`) so the queue cannot refresh and discard the drag state mid-operation; timer restarts after the reorder request resolves (both success and error paths)
+
 ### Analytics — Patient Trends MySQL Compatibility Fix *(2026-04-21)*
 - `dataTrends()` in `AnalyticsController` was using `JSON_EXTRACT()` / `JSON_UNQUOTE()` SQL functions (requires MySQL 5.7.8+) which are unavailable on the BlueHost production MySQL version, causing the Patient Trends tab to return a 500 error on the live site while working fine locally (MariaDB)
 - All five affected queries (medicine sources, medical conditions, other conditions, family history, other family history) replaced with a single `SELECT assessment, vitals_json` fetch; JSON parsing and aggregation now performed in PHP using `json_decode()`, which is version-agnostic

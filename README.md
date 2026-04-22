@@ -103,6 +103,7 @@ There are three test data files. Load them in this order from phpMyAdmin → SQL
 | `sql/test_data.sql` | Phase 1: 8 staff users (IDs 4–11), 10 patients (IDs 5–14), case sheets, appointments, feedback, messages, assets |
 | `sql/test_data_phase2.sql` | Phase 2: 6 more staff (IDs 12–17), 16 more patients (IDs 15–30), richer clinical data, lab orders |
 | `sql/test_data_phase3.sql` | Phase 3: additional clinical/lab data, internal messages, **3 patient portal accounts** |
+| `sql/test_data_analytics.sql` | Analytics: 21 case sheets across April 2026 with varied visit types, conditions, closure types, and medicine sources; 20 audit log entries (intake timing); 5 appointments; 10 patient feedback entries |
 
 Each file is safe to run multiple times — all inserts use `INSERT IGNORE`.
 

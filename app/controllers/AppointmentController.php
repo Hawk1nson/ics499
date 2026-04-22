@@ -128,6 +128,7 @@ class AppointmentController
 				        p.last_name,
 				        p.age_years,
 				        p.sex,
+				        p.date_of_birth,
 				        d.first_name AS doc_first,
 				        d.last_name  AS doc_last
 				   FROM case_sheets cs

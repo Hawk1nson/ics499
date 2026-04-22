@@ -1245,7 +1245,7 @@ $roleLabel = [
 <script src="assets/js/adminlte.min.js"></script>
 <script src="assets/js/theme-toggle.js"></script>
 <script src="assets/js/fullcalendar.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script src="assets/js/sortable.min.js"></script>
 <script>
 (function () {
 'use strict';
@@ -1545,6 +1545,10 @@ function renderQueue(rows) {
 		animation:   150,
 		ghostClass:  'sortable-ghost',
 		chosenClass: 'sortable-chosen',
+		onStart: function () {
+			clearInterval(pollTimer);
+			pollTimer = null;
+		},
 		onEnd: saveOrder
 	});
 }
@@ -1560,7 +1564,12 @@ function saveOrder() {
 		method:  'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body:    JSON.stringify({ csrf_token: CSRF_TOKEN, positions: positions })
-	}).catch(function (e) { console.error('Queue reorder failed:', e); });
+	}).then(function () {
+		if (!pollTimer) { pollTimer = setInterval(pollQueue, POLL_MS); }
+	}).catch(function (e) {
+		console.error('Queue reorder failed:', e);
+		if (!pollTimer) { pollTimer = setInterval(pollQueue, POLL_MS); }
+	});
 }
 
 function pollQueue() {

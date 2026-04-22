@@ -352,6 +352,7 @@ table tbody tr:has(.appt-open-drawer):hover td{background-color:rgba(0,0,0,.025)
 											        data-case-sheet-id="<?= (int)$cs['case_sheet_id'] ?>"
 											        data-patient-id="<?= (int)$cs['patient_id'] ?>"
 											        data-patient-name="<?= htmlspecialchars($cs['first_name'] . ' ' . ($cs['last_name'] ?? '')) ?>"
+											        data-patient-dob="<?= htmlspecialchars($cs['date_of_birth'] ?? '') ?>"
 											        data-doctor-user-id="<?= (int)($cs['assigned_doctor_user_id'] ?? 0) ?>"
 											        data-doctor-name="<?= $cs['assigned_doctor_user_id'] ? htmlspecialchars('Dr. ' . $cs['doc_first'] . ' ' . $cs['doc_last']) : '' ?>">
 												<i class="fas fa-calendar-plus mr-1"></i>Schedule
@@ -503,9 +504,9 @@ function apptActionDropdown(int $apptId, string $currentStatus, int $doctorUserI
 
 				<!-- Patient search (name + optional DOB filter) -->
 				<div class="form-group">
-					<label>Patient <span class="text-danger">*</span></label>
 					<div class="row no-gutters">
 						<div class="col-md-8 pr-md-1">
+							<label>Patient <span class="text-danger">*</span></label>
 							<div class="input-group">
 								<input type="text" id="schedPatientSearch" class="form-control"
 								       placeholder="Type patient name…" autocomplete="off" />
@@ -514,7 +515,8 @@ function apptActionDropdown(int $apptId, string $currentStatus, int $doctorUserI
 								</div>
 							</div>
 						</div>
-						<div class="col-md-4 pl-md-1 mt-2 mt-md-0">
+						<div class="col-md-4 pl-md-1">
+							<label for="schedPatientDob">Date of Birth</label>
 							<input type="date" id="schedPatientDob" class="form-control"
 							       title="Filter by date of birth (optional)" />
 						</div>
@@ -1040,11 +1042,13 @@ $(document).on('click', '.schedule-from-pending-btn', function () {
 	const doctorId   = parseInt($btn.data('doctor-user-id'), 10) || 0;
 	const doctorName = $btn.data('doctor-name') || '';
 	const patientName = $btn.data('patient-name') || '';
+	const patientDob  = $btn.data('patient-dob') || '';
 
 	// Pre-fill and open the schedule modal
 	resetScheduleModal();
 	$('#schedPatientId').val(patientId);
 	$('#schedPatientSearch').val(patientName).prop('readonly', true);
+	$('#schedPatientDob').val(patientDob ? patientDob.substring(0, 10) : '');
 	$('#schedPatientSelected span').text(patientName);
 	$('#schedPatientSelected').removeClass('d-none');
 
@@ -1071,7 +1075,7 @@ function renderSchedDropdown(results, searchTerm) {
 				$('<button type="button" class="list-group-item list-group-item-action py-2"></button>')
 					.html('<strong>' + name + '</strong> <small class="text-muted">' + metaParts.join(' \u00b7 ') + '</small>')
 					.on('click', function () {
-						selectSchedulePatient(p.patient_id, p.first_name + ' ' + (p.last_name || ''));
+						selectSchedulePatient(p.patient_id, p.first_name + ' ' + (p.last_name || ''), p.date_of_birth || '');
 					})
 			);
 		});
@@ -1136,6 +1140,7 @@ $('#saveNewPatientBtn').on('click', function () {
 		$('#newPatientAlert').attr('class', 'alert alert-warning').text('First name is required.').removeClass('d-none');
 		return;
 	}
+	const newPtDobVal = $('#newPtDob').val() || '';
 	const $btn = $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>Creating\u2026');
 	$.ajax({
 		url:         'appointments.php?action=create-patient',
@@ -1163,7 +1168,7 @@ $('#saveNewPatientBtn').on('click', function () {
 					escHtml(fullName) + ' <span class="badge badge-info ml-1">New \u00b7 ' + escHtml(data.patient_code) + '</span>'
 				);
 				$('#schedPatientSelected').removeClass('d-none');
-				$('#schedPatientDob').val('');
+				$('#schedPatientDob').val(newPtDobVal ? newPtDobVal.substring(0, 10) : '');
 				loadPatientCases(data.patient_id, data.case_sheet_id, 0);
 			} else {
 				$('#newPatientAlert').attr('class', 'alert alert-danger').text(data.message || 'Error creating patient.').removeClass('d-none');
@@ -1183,13 +1188,14 @@ function resetNewPatientForm() {
 	$('#newPatientAlert').addClass('d-none').empty();
 }
 
-function selectSchedulePatient(patientId, patientName) {
+function selectSchedulePatient(patientId, patientName, dob) {
 	$('#schedPatientId').val(patientId);
 	$('#schedPatientSearch').val(patientName);
 	$('#schedPatientSelected span').text(patientName);
 	$('#schedPatientSelected').removeClass('d-none');
 	$('#schedPatientDropdown').addClass('d-none');
 	$('#newPatientPanel').addClass('d-none');
+	$('#schedPatientDob').val(dob ? dob.substring(0, 10) : '');
 	loadPatientCases(patientId, 0, 0);
 }
 
