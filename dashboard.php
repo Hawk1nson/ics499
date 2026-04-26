@@ -571,8 +571,10 @@ $roleLabel = [
 							?>
 							<ul class="list-unstyled mb-0">
 							<?php foreach ($staleSheets as $_si => $_s):
-								if ($_s['status'] === 'INTAKE_IN_PROGRESS' || $_s['status'] === 'INTAKE_COMPLETE') {
+								if ($_s['status'] === 'INTAKE_IN_PROGRESS') {
 									$_staleHref = 'intake.php?case_sheet_id=' . (int)$_s['case_sheet_id'];
+								} elseif ($_s['status'] === 'INTAKE_COMPLETE') {
+									$_staleHref = 'intake.php?action=view&case_sheet_id=' . (int)$_s['case_sheet_id'];
 								} elseif ($_s['status'] === 'DOCTOR_REVIEW') {
 									$_staleHref = 'review.php?case_sheet_id=' . (int)$_s['case_sheet_id'];
 								} else {
@@ -668,13 +670,14 @@ $roleLabel = [
 					</a>
 				</div>
 
+				<?php if (can($_userRole, 'labwork')): ?>
 				<div class="col-6 col-sm-4 col-md-2 mb-2">
-					<span class="qa-tile qa-disabled">
+					<a href="lab_results.php" class="qa-tile">
 						<i class="fas fa-vial qa-icon text-danger"></i>
-						<span class="qa-label">Lab Results</span>
-						<span class="qa-soon">Coming Soon</span>
-					</span>
+						<span class="qa-label">Labwork</span>
+					</a>
 				</div>
+				<?php endif; ?>
 
 				<div class="col-6 col-sm-4 col-md-2 mb-2">
 					<a href="tasks.php" class="qa-tile">
@@ -1492,16 +1495,20 @@ function actionCell(row) {
 			'<i class="fas fa-pencil-alt mr-1"></i>Continue</a>';
 	}
 	if ((USER_ROLE === 'NURSE' || USER_ROLE === 'TRIAGE_NURSE') && row.status === 'INTAKE_COMPLETE') {
+		var viewBtn = '<a href="intake.php?action=view&case_sheet_id=' + row.case_sheet_id + '" class="btn btn-sm btn-outline-info mr-1">' +
+			'<i class="fas fa-eye mr-1"></i>View</a>';
 		if (row.doctor_name) {
-			// Doctor already assigned — show name with a reassign option
-			return '<span class="text-success small"><i class="fas fa-user-md mr-1"></i>' +
+			// Doctor already assigned — show view + doctor name + reassign option
+			return viewBtn +
+				'<span class="text-success small"><i class="fas fa-user-md mr-1"></i>' +
 				$('<span>').text(row.doctor_name).html() + '</span> ' +
 				'<button type="button" class="btn btn-sm btn-outline-secondary dash-assign-btn ml-1" ' +
 				'data-case-sheet-id="' + row.case_sheet_id + '" ' +
 				'data-patient-name="' + row.patient_name + '" ' +
 				'title="Reassign"><i class="fas fa-exchange-alt"></i></button>';
 		}
-		return '<button type="button" class="btn btn-sm btn-info dash-assign-btn" ' +
+		return viewBtn +
+			'<button type="button" class="btn btn-sm btn-info dash-assign-btn" ' +
 			'data-case-sheet-id="' + row.case_sheet_id + '" ' +
 			'data-patient-name="' + row.patient_name + '">' +
 			'<i class="fas fa-user-md mr-1"></i>Assign Doctor</button>';

@@ -7,6 +7,8 @@
  *   GET  ?action=patient-search    → AJAX patient search
  *   POST ?action=register-patient  → AJAX new patient registration
  *   POST ?action=claim             → doctor claims case sheet for review
+ *   GET  ?action=view              → read-only case sheet summary
+ *   POST ?action=amend             → log amendment start, redirect to edit mode
  */
 
 require_once __DIR__ . '/app/config/session.php';
@@ -33,6 +35,12 @@ switch ($action) {
 		break;
 	case 'complete':
 		$controller->completeIntake();
+		break;
+	case 'view':
+		$controller->viewIntake();
+		break;
+	case 'amend':
+		$controller->amendIntake();
 		break;
 	case 'update-patient':
 		$controller->updatePatient();

@@ -1227,11 +1227,17 @@ load_language($_SESSION['language'] ?? 'en');
 								</form>
 								<div class="tab-navigation">
 									<button type="button" class="btn btn-secondary btn-next-tab" data-target="#tab-labs"><i class="fas fa-chevron-left"></i> Previous</button>
-									<form method="post" action="intake.php?action=complete" style="display:inline">
-										<input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>" />
-										<input type="hidden" name="case_sheet_id" value="<?= $csId ?>" />
-										<button type="submit" class="btn btn-success btn-lg"><i class="fas fa-check-circle mr-1"></i><?= __('complete_intake') ?></button>
-									</form>
+									<?php if ($amendMode ?? false): ?>
+										<a href="intake.php?action=view&case_sheet_id=<?= $csId ?>" class="btn btn-primary btn-lg">
+											<i class="fas fa-check mr-1"></i>Done – Return to View
+										</a>
+									<?php else: ?>
+										<form method="post" action="intake.php?action=complete" style="display:inline">
+											<input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>" />
+											<input type="hidden" name="case_sheet_id" value="<?= $csId ?>" />
+											<button type="submit" class="btn btn-success btn-lg"><i class="fas fa-check-circle mr-1"></i><?= __('complete_intake') ?></button>
+										</form>
+									<?php endif; ?>
 								</div>
 							</div>
 
@@ -1507,7 +1513,7 @@ load_language($_SESSION['language'] ?? 'en');
 		});
 
 		// ── Lab order modal ─────────────────────────────
-		(function () {
+		$(function () {
 			var $modal     = $('#labOrderModal');
 			var $rows      = $('#labTestRows');
 			var $error     = $('#labOrderError');
@@ -1620,7 +1626,7 @@ load_language($_SESSION['language'] ?? 'en');
 					}
 				});
 			});
-		})();
+		});
 
 	}
 

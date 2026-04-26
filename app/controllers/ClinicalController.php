@@ -41,6 +41,7 @@ class ClinicalController
 
 		// Step 2: If case_sheet_id in URL, load the full form
 		$caseSheetId = (int)($_GET['case_sheet_id'] ?? 0);
+		$amendMode    = $caseSheetId > 0 && isset($_GET['amend']) && $_GET['amend'] === '1';
 		if ($caseSheetId > 0) {
 			$pdo  = getDBConnection();
 			$stmt = $pdo->prepare('SELECT * FROM case_sheets WHERE case_sheet_id = ?');
@@ -165,6 +166,123 @@ class ClinicalController
 			. ' (' . htmlspecialchars($row['patient_code']) . '). Case sheet is now in the doctor queue.';
 
 		header('Location: intake.php');
+		exit;
+	}
+
+	// ── Read-only case sheet summary (INTAKE_COMPLETE) ──────
+
+	public function viewIntake(): void
+	{
+		$this->requireClinicalRole();
+
+		$caseSheetId = (int)($_GET['case_sheet_id'] ?? 0);
+		if ($caseSheetId <= 0) {
+			header('Location: intake.php');
+			exit;
+		}
+
+		$pdo  = getDBConnection();
+		$stmt = $pdo->prepare(
+			'SELECT cs.*,
+			        u.first_name  AS doctor_first,
+			        u.last_name   AS doctor_last,
+			        cu.first_name AS created_first,
+			        cu.last_name  AS created_last
+			   FROM case_sheets cs
+			   LEFT JOIN users u  ON u.user_id  = cs.assigned_doctor_user_id
+			   LEFT JOIN users cu ON cu.user_id = cs.created_by_user_id
+			  WHERE cs.case_sheet_id = ?'
+		);
+		$stmt->execute([$caseSheetId]);
+		$caseSheet = $stmt->fetch();
+
+		if (!$caseSheet) {
+			header('Location: intake.php');
+			exit;
+		}
+
+		$stmt = $pdo->prepare(
+			'SELECT patient_id, patient_code, first_name, last_name, sex, date_of_birth,
+			        age_years, phone_e164, email, address_line1, city, state_province, postal_code,
+			        blood_group, allergies, emergency_contact_name, emergency_contact_phone
+			   FROM patients WHERE patient_id = ?'
+		);
+		$stmt->execute([$caseSheet['patient_id']]);
+		$patient = $stmt->fetch();
+
+		$labOrders = [];
+		try {
+			$stmt = $pdo->prepare(
+				'SELECT lo.order_id, lo.test_name, lo.order_notes, lo.status, lo.ordered_at,
+				        u.first_name AS ordered_by_first, u.last_name AS ordered_by_last
+				   FROM lab_orders lo
+				   JOIN users u ON u.user_id = lo.ordered_by_user_id
+				  WHERE lo.case_sheet_id = ?
+				  ORDER BY lo.ordered_at DESC'
+			);
+			$stmt->execute([$caseSheetId]);
+			$labOrders = $stmt->fetchAll();
+		} catch (Exception $e) {
+			$labOrders = [];
+		}
+
+		$auditLog = [];
+		try {
+			$stmt = $pdo->prepare(
+				'SELECT al.*, u.first_name AS user_first, u.last_name AS user_last
+				   FROM case_sheet_audit_log al
+				   LEFT JOIN users u ON u.user_id = al.user_id
+				  WHERE al.case_sheet_id = ?
+				  ORDER BY al.changed_at DESC
+				  LIMIT 100'
+			);
+			$stmt->execute([$caseSheetId]);
+			$auditLog = $stmt->fetchAll();
+		} catch (Exception $e) {
+			$auditLog = [];
+		}
+
+		require __DIR__ . '/../views/intake_readonly.php';
+	}
+
+	// ── Log amendment start, redirect to edit mode ────────────
+
+	public function amendIntake(): void
+	{
+		$this->requireClinicalRole();
+
+		if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+			header('Location: intake.php');
+			exit;
+		}
+
+		if (!hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'] ?? '')) {
+			header('Location: intake.php');
+			exit;
+		}
+
+		$caseSheetId = (int)($_POST['case_sheet_id'] ?? 0);
+		if ($caseSheetId <= 0) {
+			header('Location: intake.php');
+			exit;
+		}
+
+		$pdo  = getDBConnection();
+		$stmt = $pdo->prepare('SELECT status FROM case_sheets WHERE case_sheet_id = ?');
+		$stmt->execute([$caseSheetId]);
+		$row = $stmt->fetch();
+
+		if (!$row || $row['status'] !== 'INTAKE_COMPLETE') {
+			header('Location: intake.php?action=view&case_sheet_id=' . $caseSheetId);
+			exit;
+		}
+
+		$this->writeAuditLog(
+			$pdo, $caseSheetId, (int)$_SESSION['user_id'],
+			'amendment', null, 'Intake reopened for amendment'
+		);
+
+		header('Location: intake.php?case_sheet_id=' . $caseSheetId . '&amend=1');
 		exit;
 	}
 

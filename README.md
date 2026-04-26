@@ -4,6 +4,16 @@
 
 A PHP/MySQL web application for patient care management, built as a capstone project.
 
+---
+
+> **New to this project? Start here:**
+>
+> `project-resources/getting-started/QUICKSTART.md` gets you from zero to a fully working local instance in about ten minutes — no Composer, no Node, no build step.
+>
+> It includes a complete database snapshot (`d3s3_database.sql`) with all schema, test data, and portal accounts pre-loaded, so you can skip the migration steps entirely and go straight to exploring the app.
+
+---
+
 ## Requirements
 
 - PHP 8.x

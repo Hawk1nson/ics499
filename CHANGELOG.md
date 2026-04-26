@@ -1,5 +1,21 @@
 # Changelog
 
+### Intake — Read-Only View & Amendment Mode *(2026-04-26)*
+- New `intake.php?action=view` route displays a completed case sheet in a clean read-only layout (`app/views/intake_readonly.php`) — patient demographics, vitals, history, assessment, treatment plan, lab orders, and audit log, all non-editable
+- Dashboard links for `INTAKE_COMPLETE` sheets now go to this read-only view instead of dropping the user into the edit form
+- Queue rows on the dashboard for `INTAKE_COMPLETE` cases show a **View** button alongside the Assign Doctor button so nurses can review a submitted sheet without accidentally editing it
+- A separate `intake.php?action=amend` POST action logs the amendment start to the case sheet audit trail and reopens the edit form in **amend mode** — the Complete Intake button becomes "Done – Return to View" so the workflow is explicit
+- `ClinicalController::viewIntake()` and `ClinicalController::amendIntake()` added; `$amendMode` flag threaded through to `app/views/intake.php`
+
+### Dashboard — Labwork Tile Now Live *(2026-04-26)*
+- The "Lab Results / Coming Soon" placeholder tile in the quick-action grid is now a live link to `lab_results.php`, labelled "Labwork" to match the sidebar and controller naming
+- Tile is permission-gated on the `labwork` resource so it only appears for roles with labwork access
+
+### Quick Start Guide & Database Snapshot *(2026-04-26)*
+- `project-resources/getting-started/QUICKSTART.md` — full ten-minute XAMPP setup guide covering installation, `.htaccess` HTTPS comment-out, `.env` setup, database creation, and import; includes feature tour and complete troubleshooting section
+- `project-resources/getting-started/d3s3_database.sql` — complete database snapshot (schema + all test data) exported from the working development environment; importing this single file into a fresh `core_app` database replaces the full migration + test data load sequence
+- README updated with a prominent Quick Start callout at the top pointing new users to these files
+
 ### Appointments — DOB Auto-Fill on Scheduling *(2026-04-22)*
 - `AppointmentController` now includes `p.date_of_birth` in the pending-case-sheets query so the date is available client-side
 - When opening the schedule modal from the Pending Assignment tab, the patient's date of birth is automatically pre-filled in the DOB filter field
