@@ -1,5 +1,12 @@
 # Changelog
 
+### Messaging — Archive *(2026-04-29)*
+- Recipients can archive any received message via an **Archive** button in the message card footer; archived messages are hidden from the inbox without being deleted
+- A third **Archived** tab in the left panel shows all messages the user has archived; an **Move to Inbox** button restores any message back to the inbox
+- Archiving is per-recipient: each user controls only their own copy; the sender's Sent view and the other recipient's inbox are unaffected
+- Migration 028 adds `recipient_archived TINYINT(1) DEFAULT 0` to the `messages` table with an index on `(recipient_user_id, recipient_archived)`; the unread-count badge now excludes archived messages
+- Both archive and unarchive actions are AJAX with CSRF validation; the row is removed from the list panel immediately without a page reload
+
 ### Intake — Read-Only View & Amendment Mode *(2026-04-26)*
 - New `intake.php?action=view` route displays a completed case sheet in a clean read-only layout (`app/views/intake_readonly.php`) — patient demographics, vitals, history, assessment, treatment plan, lab orders, and audit log, all non-editable
 - Dashboard links for `INTAKE_COMPLETE` sheets now go to this read-only view instead of dropping the user into the edit form

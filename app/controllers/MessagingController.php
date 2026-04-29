@@ -24,6 +24,12 @@ class MessagingController
 		$isAjax  = isset($_SERVER['HTTP_X_REQUESTED_WITH'])
 		           && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
 
+		// ── POST: archive / unarchive (always exits via JSON) ────────────
+		if ($_SERVER['REQUEST_METHOD'] === 'POST' &&
+		    in_array($action, ['archive', 'unarchive'], true)) {
+			$this->processArchive($action === 'unarchive');
+		}
+
 		// ── POST: send message (always runs before panel logic) ──────────
 		$formError = null;
 		if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -54,7 +60,11 @@ class MessagingController
 		$unreadCount  = 0;
 
 		if (!$isPanel) {
-			$listTab = ($action === 'sent') ? 'sent' : 'inbox';
+			$listTab = match($action) {
+				'sent'     => 'sent',
+				'archived' => 'archived',
+				default    => 'inbox',
+			};
 
 			try {
 				if ($listTab === 'sent') {
@@ -72,12 +82,20 @@ class MessagingController
 						  GROUP BY m.thread_id
 						  ORDER BY sent_at DESC'
 					);
+				} elseif ($listTab === 'archived') {
+					$stmt = $pdo->prepare(
+						'SELECT m.*, u.first_name AS sender_first, u.last_name AS sender_last
+						   FROM messages m
+						   JOIN users u ON m.sender_user_id = u.user_id
+						  WHERE m.recipient_user_id = ? AND m.recipient_archived = 1
+						  ORDER BY m.sent_at DESC'
+					);
 				} else {
 					$stmt = $pdo->prepare(
 						'SELECT m.*, u.first_name AS sender_first, u.last_name AS sender_last
 						   FROM messages m
 						   JOIN users u ON m.sender_user_id = u.user_id
-						  WHERE m.recipient_user_id = ?
+						  WHERE m.recipient_user_id = ? AND m.recipient_archived = 0
 						  ORDER BY m.sent_at DESC'
 					);
 				}
@@ -85,7 +103,7 @@ class MessagingController
 				$listMessages = $stmt->fetchAll();
 
 				$stmt = $pdo->prepare(
-					'SELECT COUNT(*) FROM messages WHERE recipient_user_id = ? AND is_read = 0'
+					'SELECT COUNT(*) FROM messages WHERE recipient_user_id = ? AND is_read = 0 AND recipient_archived = 0'
 				);
 				$stmt->execute([$userId]);
 				$unreadCount = (int)$stmt->fetchColumn();
@@ -241,6 +259,32 @@ class MessagingController
 
 		$_SESSION['messages_success'] = 'Message sent to ' . $n . ' recipient' . ($n !== 1 ? 's' : '') . '.';
 		header('Location: messages.php?action=sent');
+		exit;
+	}
+
+	private function processArchive(bool $unarchive): void
+	{
+		header('Content-Type: application/json');
+		if (!hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'] ?? '')) {
+			echo json_encode(['success' => false, 'error' => 'Invalid request token.']);
+			exit;
+		}
+		$msgId  = (int)($_POST['message_id'] ?? 0);
+		$userId = (int)$_SESSION['user_id'];
+		if ($msgId < 1) {
+			echo json_encode(['success' => false, 'error' => 'Invalid message.']);
+			exit;
+		}
+		try {
+			$pdo  = getDBConnection();
+			$stmt = $pdo->prepare(
+				'UPDATE messages SET recipient_archived = ? WHERE message_id = ? AND recipient_user_id = ?'
+			);
+			$stmt->execute([$unarchive ? 0 : 1, $msgId, $userId]);
+			echo json_encode(['success' => true]);
+		} catch (Throwable $e) {
+			echo json_encode(['success' => false, 'error' => 'Database error.']);
+		}
 		exit;
 	}
 }

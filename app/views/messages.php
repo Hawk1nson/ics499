@@ -257,12 +257,20 @@ $roleLabels = [
 					   data-panel-url="messages.php?action=sent&panel=right">
 						<i class="fas fa-paper-plane mr-1"></i>Sent
 					</a>
+					<a href="messages.php?action=archived"
+					   class="msg-list-tab <?= $listTab === 'archived' ? 'active' : '' ?>"
+					   data-panel-url="messages.php?action=archived&panel=right">
+						<i class="fas fa-archive mr-1"></i>Archived
+					</a>
 				</div>
 
 				<div class="msg-list-scroll" id="msgListScroll">
 					<?php if (empty($listMessages)): ?>
 					<div class="text-center text-muted py-5" style="font-size:.85rem">
-						<?= $listTab === 'sent' ? 'No sent messages.' : 'Your inbox is empty.' ?>
+						<?php if ($listTab === 'sent'): ?>No sent messages.
+						<?php elseif ($listTab === 'archived'): ?>No archived messages.
+						<?php else: ?>Your inbox is empty.
+						<?php endif; ?>
 					</div>
 					<?php else: ?>
 					<?php foreach ($listMessages as $msg): ?>
@@ -339,17 +347,29 @@ $roleLabels = [
 			<p class="mb-0" style="white-space:pre-wrap;word-break:break-word"><?= nl2br(htmlspecialchars($message['body'])) ?></p>
 		</div>
 		<?php if ((int)$message['recipient_user_id'] === (int)$_SESSION['user_id']): ?>
-		<div class="card-footer d-flex justify-content-end" style="gap:.5rem">
-			<a href="messages.php?action=compose&reply_to=<?= (int)$message['sender_user_id'] ?>&reply_subject=<?= urlencode('Re: ' . $message['subject']) ?>"
-			   class="btn btn-outline-primary btn-sm" data-compose-link>
-				<i class="fas fa-reply mr-1"></i>Reply
-			</a>
-			<?php if (count($threadRecipients) > 1): ?>
-			<a href="messages.php?action=compose&reply_all_thread=<?= urlencode($message['thread_id']) ?>&reply_subject=<?= urlencode('Re: ' . $message['subject']) ?>"
-			   class="btn btn-primary btn-sm" data-compose-link>
-				<i class="fas fa-reply-all mr-1"></i>Reply All
-			</a>
-			<?php endif; ?>
+		<div class="card-footer d-flex justify-content-between align-items-center" style="gap:.5rem">
+			<button type="button" class="btn btn-outline-secondary btn-sm" id="archiveBtn"
+			        data-message-id="<?= (int)$message['message_id'] ?>"
+			        data-archived="<?= (int)($message['recipient_archived'] ?? 0) ?>"
+			        data-csrf="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+				<?php if (!empty($message['recipient_archived'])): ?>
+				<i class="fas fa-inbox mr-1"></i>Move to Inbox
+				<?php else: ?>
+				<i class="fas fa-archive mr-1"></i>Archive
+				<?php endif; ?>
+			</button>
+			<div style="display:flex;gap:.5rem">
+				<a href="messages.php?action=compose&reply_to=<?= (int)$message['sender_user_id'] ?>&reply_subject=<?= urlencode('Re: ' . $message['subject']) ?>"
+				   class="btn btn-outline-primary btn-sm" data-compose-link>
+					<i class="fas fa-reply mr-1"></i>Reply
+				</a>
+				<?php if (count($threadRecipients) > 1): ?>
+				<a href="messages.php?action=compose&reply_all_thread=<?= urlencode($message['thread_id']) ?>&reply_subject=<?= urlencode('Re: ' . $message['subject']) ?>"
+				   class="btn btn-primary btn-sm" data-compose-link>
+					<i class="fas fa-reply-all mr-1"></i>Reply All
+				</a>
+				<?php endif; ?>
+			</div>
 		</div>
 		<?php endif; ?>
 	</div>
@@ -508,6 +528,48 @@ function initPanelScripts() {
 			updateListActiveRow(null);
 		});
 	});
+
+	// ── Archive / Unarchive button ───────────────────────────────────────
+	var archiveBtn = contentPanel.querySelector('#archiveBtn');
+	if (archiveBtn) {
+		archiveBtn.addEventListener('click', function () {
+			var msgId    = archiveBtn.dataset.messageId;
+			var archived = archiveBtn.dataset.archived === '1';
+			var action   = archived ? 'unarchive' : 'archive';
+
+			archiveBtn.disabled = true;
+
+			var data = new FormData();
+			data.append('csrf_token', archiveBtn.dataset.csrf);
+			data.append('message_id', msgId);
+
+			fetch('messages.php?action=' + action, {
+				method: 'POST',
+				headers: { 'X-Requested-With': 'XMLHttpRequest' },
+				body: data
+			})
+			.then(function (r) { return r.json(); })
+			.then(function (res) {
+				if (!res.success) { archiveBtn.disabled = false; return; }
+				// Remove the row from the left panel list
+				var row = document.querySelector('.msg-row[data-msg-id="' + msgId + '"]');
+				if (row) row.remove();
+				// Show empty state if the list is now empty
+				var scroll = document.getElementById('msgListScroll');
+				if (scroll && !scroll.querySelector('.msg-row')) {
+					scroll.innerHTML = '<div class="text-center text-muted py-5" style="font-size:.85rem">' +
+						(archived ? 'Your inbox is empty.' : 'No archived messages.') + '</div>';
+				}
+				// Show confirmation in the right panel
+				contentPanel.innerHTML =
+					'<div class="msg-welcome">' +
+					'<i class="fas fa-check-circle fa-4x mb-3 text-success"></i>' +
+					'<p class="mb-0">' + (archived ? 'Message moved to inbox.' : 'Message archived.') + '</p>' +
+					'</div>';
+			})
+			.catch(function () { archiveBtn.disabled = false; });
+		});
+	}
 
 	// Init Tom Select if compose was loaded
 	initTomSelect(contentPanel);
