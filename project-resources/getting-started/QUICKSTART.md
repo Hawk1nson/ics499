@@ -196,7 +196,7 @@ Once logged in as **Anita Gupta (ADMIN)**, here is a suggested order for explori
 | Intake / Queue | `intake.php` | Open a case sheet; move through triage tabs |
 | Appointments | `appointments.php` | View scheduled visits; assign doctors |
 | Labwork | `lab_results.php` | See pending lab orders; mark one complete |
-| Messages | `messages.php` | Send an internal message to another staff member |
+| Messages | `messages.php` | Send an internal message; archive a message from your inbox |
 | Tasks | `tasks.php` | Create a task; mark it done |
 | Feedback | `feedback.php` | Review submitted grievances |
 | Assets | `assets.php` | Browse the resource library; send an asset to a patient |
@@ -274,7 +274,7 @@ The included `d3s3_database.sql` is a complete snapshot of the development datab
 - Case sheets with clinical notes, diagnoses, prescriptions
 - Appointments (scheduled, in-progress, completed)
 - Lab orders (pending and completed)
-- Internal messages and tasks
+- Internal messages (with per-recipient archive) and tasks
 - Feedback/grievance entries
 - 3 patient portal accounts linked to patients 1–3
 - Sample portal message threads
@@ -283,4 +283,4 @@ The included `d3s3_database.sql` is a complete snapshot of the development datab
 
 ---
 
-*Exported from a working XAMPP 8.2 / MariaDB 10.4 environment — 2026-04-26*
+*Exported from a working XAMPP 8.2 / MariaDB 10.4 environment — 2026-04-30*

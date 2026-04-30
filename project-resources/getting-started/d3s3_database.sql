@@ -338,12 +338,14 @@ CREATE TABLE `messages` (
   `subject` varchar(200) NOT NULL,
   `body` text NOT NULL,
   `is_read` tinyint(1) NOT NULL DEFAULT 0,
+  `recipient_archived` tinyint(1) NOT NULL DEFAULT 0,
   `sent_at` datetime NOT NULL DEFAULT current_timestamp(),
   `notes` text DEFAULT NULL COMMENT 'Free-form notes for stakeholder use',
   PRIMARY KEY (`message_id`),
   KEY `fk_messages_sender` (`sender_user_id`),
   KEY `fk_messages_recipient` (`recipient_user_id`),
   KEY `idx_messages_thread_id` (`thread_id`),
+  KEY `idx_messages_recipient_archived` (`recipient_user_id`,`recipient_archived`),
   CONSTRAINT `fk_messages_recipient` FOREIGN KEY (`recipient_user_id`) REFERENCES `users` (`user_id`),
   CONSTRAINT `fk_messages_sender` FOREIGN KEY (`sender_user_id`) REFERENCES `users` (`user_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
